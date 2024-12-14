@@ -17,6 +17,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 # from decorators import anonymous_required
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models import Q
+from django.core.serializers import serialize
 
 from .models import *
 
@@ -31,6 +34,10 @@ import math
 from statistics import NormalDist
 from scipy.stats import norm
 from statistics import stdev
+import io, base64
+import seaborn as sns
+from matplotlib import pyplot as plt
+import random
 
 from django.shortcuts import redirect
 
@@ -615,7 +622,7 @@ def sales_view(request):
         else:
             sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
     else:
-        sales = Sales.objects.filter(user_id=user_id)
+        sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
 
     context = {
         'sales': sales
@@ -712,7 +719,7 @@ def transaction_view(request):
         else:
             transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
     else:
-        transactions = Transaction.objects.filter(user_id=user_id)
+        transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
     
     context = {
         'transactions': transactions
@@ -769,10 +776,10 @@ def export_view(request):
             else:
                 standar_deviasi = np.std(sales_list)
 
-            biaya_kekurangan = (item.price * 7.5 / 100) + item.price
+            biaya_kekurangan = round((item.price * 7.5 / 100) + item.price)
 
             # Write row excel
-            row = [idx+1, item.name, item.biaya_pesan, sales_count, 200000, biaya_kekurangan, item.price, item.lead_time, standar_deviasi]
+            row = [idx+1, item.name, item.biaya_pesan, sales_count, 50000, biaya_kekurangan, item.price, item.lead_time, standar_deviasi]
             writer.writerow(row)
         return response
     
@@ -783,46 +790,292 @@ def export_view(request):
     return render(request, 'export/index.html', context)
 
 # Periodic Review
-def calculate_inventory_cost(product, to):
-    A = product["biaya_pesan"]
-    D = product["permintaan_baku"] / 5
-    vr = product["biaya_simpan"] / 5
-    B3 = product["biaya_kekurangan"]
-    L = product["lead_time"]
-    Std = product["standar_deviasi"]
-    k = round(vr / (vr + B3), 2)
-    sigma_RL = (to + L) * Std
+def log_scaled_mutation(individual, mutation_rate, sigma=0.1, lower_bound=1, upper_bound=100):
+    """
+    Applies log-scaled mutation to an individual.
+    """
+    mutated_individual = []
+    for gene in individual:
+        if isinstance(gene, (int, float)):  # Ensure the gene is a number
+            if random.random() < mutation_rate:
+                # Apply log-scaled mutation
+                r = random.gauss(0, sigma)  # Small random value from normal distribution
+                mutated_gene = gene * (10 ** r)  # Logarithmic scaling
+                # Clamp mutated value within bounds
+                mutated_gene = max(min(mutated_gene, upper_bound), lower_bound)
+                mutated_individual.append(mutated_gene)
+            else:
+                mutated_individual.append(gene)
+        else:
+            # Keep non-numerical genes unchanged
+            mutated_individual.append(gene)
+    return tuple(mutated_individual)
 
-    # Mencari Q
-    Q = math.sqrt((2 * A * D) / vr)
+def daily_demand(mean, sd, zero_threshold_factor=1.0):
+    # Random threshold for zero demand (similar to the halton sequence effect)
+    random_num = np.random.uniform(0, 1)
     
-    if Q <= 0 :
-       biaya_pesan = (A * D)
+    # Probability of having zero demand (lower values result in more zeros)
+    if random_num < zero_threshold_factor:
+        return 0
     else:
-    # Mencari total biaya pesan
-       biaya_pesan = (A * D) / Q
+        # Generate demand based on normal distribution
+        return max(0, np.random.normal(mean, sd))
 
-   
-    # Mencari total biaya simpan
-    biaya_simpan = ((Q / 2) + (k * sigma_RL) * vr)
-
-    # Mencari total biaya kekurangan
-    if Q <= 0 :
-       biaya_kekurangan = (B3 * sigma_RL * 0.216 * D)
-    else:
-    # Mencari total biaya pesan
-       biaya_kekurangan = (B3 * sigma_RL * 0.216 * D) / Q
+def simulate_inventory(product):
+    product_sim = {}
+    product_sim["nama_barang"] = product['nama_barang']
+    product_sim["biaya_pesan"] = product['biaya_pesan']
+    product_sim["permintaan_baku"] = product['permintaan_baku']
+    product_sim["biaya_simpan"] = product['biaya_simpan']
+    product_sim["biaya_kekurangan"] = product['biaya_kekurangan']
+    product_sim["harga_produk"] = product['harga_produk']
+    product_sim["lead_time"] = product['lead_time']
+    product_sim["standar_deviasi"] = product['standar_deviasi']
     
+    demand_list = []
 
-    # Hitung ongkos total dan masukkan ke dalam list
-    ongkos_total = biaya_pesan + biaya_simpan + biaya_kekurangan
+    mean = product["permintaan_baku"] / 180
+    sd = product["standar_deviasi"] / np.sqrt(180)
+
+    total_demand = 0
+
+    for day in range(1, 365):
+        day_demand = daily_demand(mean, sd, 0.65)
+
+        if day_demand > 0:
+            total_demand += day_demand
+            demand_list.append(day_demand)
+        else:
+            demand_list.append(0)
+
+    product_sim["permintaan_baku"] = round(total_demand)
+    product_sim["standar_deviasi"] = np.std(demand_list)
     
-    return ongkos_total
+    return product_sim, demand_list
 
+def genetic_algorithm(product_data, population_size, num_generations, crossover_rate, mutation_rate):
+    # Initialize population
+    population = []
+    for _ in range(population_size):
+        product_sim, demand_result = simulate_inventory(product_data)
+        population.append((product_sim, demand_result))
+
+    total_biaya_penyimpanan_list = []
+    to_penyimpanan_list = []
+    data_list = []
+    demand_result_list = []
+    orders_lost_list = []
+
+    for generation in range(1, num_generations):
+        # Evaluate fitness of each individual
+        fitness_scores = []
+        for individual in population:
+            product_sim, demand_result = individual
+
+            # Simulate inventory and calculate total cost
+            total_cost, to = per_review(product_sim, demand_result)
+
+            total_biaya_penyimpanan_list.append(total_cost)
+            to_penyimpanan_list.append(to)
+            data_list.append(product_sim)
+            demand_result_list.append(demand_result)
+
+            inventory_level_list, tot_dmd, tot_lost, max_inventory = calculate_inventory_levels(demand_result)
+
+            total_demand = sum(tot_dmd)
+            unsold_orders = sum(tot_lost)
+
+            # Fitness score
+            fitness_score = 0.5 * total_cost + 0.5 * (unsold_orders / total_demand if total_demand > 0 else 0)
+            # fitness_score = 0.5 * total_cost + 0.5 * unsold_orders
+
+            fitness_scores.append(fitness_score)  # Higher fitness for lower cost
+
+        # Selection (e.g., roulette wheel selection)
+        parents = []
+        for _ in range(population_size // 2):
+            parent1 = random.choices(population, weights=fitness_scores)[0]
+            parent2 = random.choices(population, weights=fitness_scores)[0]
+
+        parents.append((parent1, parent2))
+
+        # Crossover (RCM - Random Cross Mapping)
+        offspring = []
+        for parent1, parent2 in parents:
+            if random.random() < crossover_rate:
+                mapping = [random.randint(0, 1) for _ in range(len(parent1))]
+                child1 = tuple(parent1[i] if mapping[i] == 0 else parent2[i] for i in range(len(parent1)))
+                child2 = tuple(parent2[i] if mapping[i] == 0 else parent1[i] for i in range(len(parent2)))
+            else:
+                child1 = parent1
+                child2 = parent2
+
+            offspring.append(child1)
+            offspring.append(child2)
+
+        # Mutation (Log-Scaled Mutation)
+        for i in range(len(offspring)):
+            offspring[i] = log_scaled_mutation(offspring[i], mutation_rate=mutation_rate)
+
+        population = offspring
+
+    # Select the best solution and corresponding simulation results
+    best_solution = min(population, key=lambda x: per_review(*x)[0])
+    best_product, best_demand = best_solution
+
+    best_total_cost, best_to = per_review(best_product, best_demand)
+
+    # return best_demand
+
+    # Calculating order lost
+    inventory_level_list, tot_dmd, tot_lost, max_inventory = calculate_inventory_levels(best_demand)
+
+    total_demand = sum(tot_dmd)
+    unsold_orders = sum(tot_lost) / 12
+    # orders_lost_list.append(unsold_orders/total_demand)
+    orders_lost_list.append(unsold_orders)
+
+    return total_biaya_penyimpanan_list, to_penyimpanan_list, data_list, demand_result_list, orders_lost_list, inventory_level_list, tot_dmd, tot_lost, max_inventory, best_product, best_demand, best_total_cost, best_to
+
+# Periodic Review Function
+def per_review(product, demand):
+    # Mencari review interval
+    to = math.sqrt((2 * product["biaya_pesan"]) / (product["permintaan_baku"] * product["biaya_simpan"]))
+
+    # Calculate alpha and reorder point (R)
+    alpha = to * product["biaya_simpan"] / product["biaya_kekurangan"]
+    z_alpha = ((NormalDist().inv_cdf(alpha) * -1))
+
+    fz_alpha = (norm.pdf(2.22 , loc = 0 , scale = 1 ))
+    wz_alpha = ((fz_alpha - 0.00001))
+
+    R = ((product["permintaan_baku"] * to) + (product["permintaan_baku"] * product["lead_time"]) + (z_alpha * (math.sqrt(to + product["lead_time"]))))
+
+    N = math.ceil(product["standar_deviasi"] * ((math.sqrt(to + product["lead_time"])) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
+
+    T = (product["permintaan_baku"] * product["harga_produk"]) + (product["biaya_pesan"] / to) + (product["biaya_simpan"] * (R - (product["permintaan_baku"] * product["lead_time"]) + (product["permintaan_baku"] * to / 2))) + (product["biaya_kekurangan"] / to * N)
+
+    return T, to
+
+def find_rss(to, product):
+    r = product["biaya_simpan"]
+
+    # Hitung nilai alpha dan R
+    alpha = to * r / product["biaya_kekurangan"]
+    z_alpha = ((NormalDist().inv_cdf(alpha) * -1))
+
+    fz_alpha = (norm.pdf(2.22 , loc = 0 , scale = 1 ))
+    # wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
+    wz_alpha = ((fz_alpha - 0.00001))
+
+    R = ((product["permintaan_baku"] * to) + (product["permintaan_baku"] * product["lead_time"]) + (z_alpha * (math.sqrt(to + product["lead_time"]))))
+
+    # Hitung total biaya total persediaan
+    N = math.ceil(product["standar_deviasi"] * ((math.sqrt(to + product["lead_time"])) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
+
+    T = (product["permintaan_baku"] * product["harga_produk"]) + (product["biaya_pesan"] / to) + (r * (R - (product["permintaan_baku"] * product["lead_time"]) + (product["permintaan_baku"] * to / 2))) + (product["biaya_kekurangan"] / to * N)
+
+    # Hitung nilai XR, XRL, dan sigma_RL
+    XR = to * product["permintaan_baku"]
+    XRL = (to + product["lead_time"]) * product["permintaan_baku"]
+    sigma_RL = (to + product["lead_time"]) * product["standar_deviasi"]
+
+    Qp = (1.3 * (XR ** 0.494) * ((product["biaya_pesan"] / r) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
+    z = math.sqrt((Qp * r) / (sigma_RL * product["biaya_kekurangan"]))
+
+    Sp = ((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))))
+
+    k = (r / (r + product["biaya_kekurangan"]))
+
+    So = (XRL + (k * sigma_RL))
+
+    S_list = [(Sp + Qp), (So)]
+    
+    R_to = (to * 1000)
+    s = (Sp)
+    S = max(S_list)
+
+    return R_to, s, S
+
+# Calculate the inventory levels
+def calculate_inventory_cost(product_list, to_list):
+    inventory_cost_list = []
+
+    for x, product in enumerate(product_list):
+        A = product["biaya_pesan"]
+        D = product["permintaan_baku"] / 12
+        vr = product["biaya_simpan"]
+        B3 = product["biaya_kekurangan"]
+        L = product["lead_time"]
+        Std = product["standar_deviasi"]
+        k = round(vr / (vr + B3), 2)
+        sigma_RL = (to_list[x] + L) * Std
+
+        Q = math.sqrt((2 * A * D) / vr)
+
+        biaya_pesan = (A * D) / Q
+        biaya_simpan = ((Q / 2) + (k * sigma_RL) * vr)
+        biaya_kekurangan = (B3 * sigma_RL * 0.216 * D) / Q
+
+        ongkos_total = biaya_pesan + biaya_simpan + biaya_kekurangan
+        inventory_cost_list.append(ongkos_total)
+    
+    return inventory_cost_list
+
+# Calculate the inventory level and lost orders
+def calculate_inventory_levels(demand_result):
+    inventory_level = []
+    units_lost_list = []
+    total_demand_list = []
+
+    inventory = 0
+    review_period = 30
+    lead_time = 7
+    max_inventory = 1000
+
+    stock = 0
+    stockout = 0
+    counter = 0
+
+    for day, x in enumerate(demand_result):
+        if day % review_period == 0:
+            # Placing the order
+            q = max_inventory - inventory #+ demand_lead
+            order_placed = True
+
+        if order_placed:
+            counter += 1
+
+        if counter == lead_time:
+            # Restocking day
+            inventory += q
+            order_placed = False
+            counter = 0
+
+        if inventory - x >= 0:
+            inventory -= x
+            stock_out = 0
+        elif inventory - x < 0:
+            inventory = 0
+            stockout += x
+            stock_out = x
+        
+        inventory_level.append(inventory)
+        total_demand_list.append(x)
+        units_lost_list.append(stock_out)
+
+    return inventory_level, total_demand_list, units_lost_list, max_inventory
+
+# Periodic Review
 def periodic_view(request):
     if request.method == 'POST':
         array = []
         data = []
+
+        if 'file' not in request.FILES:
+            messages.error(request, "No file was uploaded. Please upload a valid file.")
+            return redirect(request.META.get('HTTP_REFERER', '/'))  # Redirect to previous page or fallback
 
         read_file = request.FILES['file']
         csv_data = pd.read_csv(read_file, header=1, encoding="UTF-8")
@@ -834,319 +1087,148 @@ def periodic_view(request):
             array_data['permintaan_baku'] = dt[3]
             array_data['biaya_simpan'] = dt[4]
             array_data['biaya_kekurangan'] = dt[5]
-            array_data['harga_material'] = dt[6]
+            array_data['harga_produk'] = dt[6]
             array_data['lead_time'] = dt[7] / 100
             array_data['standar_deviasi'] = dt[8]
 
             array.append(array_data)
 
-        for x in array:
-            nama_barang = x['nama_barang']
-            biaya_pesan = x['biaya_pesan']
-            if x['permintaan_baku'] == 0 :
-                permintaan_baku = 1
-            else :
-                permintaan_baku = x['permintaan_baku'] 
+        # define var
+        # iteration_h = 100
+        # simulation_num = 100
+        pop_size = int(request.POST['population_size'])
+        num_generations = int(request.POST['num_generations'])
+        crossover_rate = 0.8  # Adjust as needed
+        mutation_rate = 0.1
+
+        for index, x in enumerate(array):
+            product = {}
+            product["nama_barang"] = x['nama_barang']
+            product["biaya_pesan"] = x['biaya_pesan']
+            product["permintaan_baku"] = x['permintaan_baku']
+            product["biaya_simpan"] = x['biaya_simpan']
+            product["biaya_kekurangan"] = x['biaya_kekurangan']
+            product["harga_produk"] = x['harga_produk']
+            product["lead_time"] = x['lead_time']
+            product["standar_deviasi"] = x['standar_deviasi']
             
-            biaya_simpan = x['biaya_simpan']
-            biaya_kekurangan = x['biaya_kekurangan']
-            harga_material = x['harga_material']
-            lead_time = x['lead_time']
-            standar_deviasi = x['standar_deviasi']
+            tp_list, to_list, data_list, demand_result_list, orders_lost_list, inventory_level_list, total_demand, total_lost, max_inventory, best_product, best_demand, best_total_cost, best_to = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate)
+            # pop, fit_score, pop_size = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate)
+
+            # best_demand = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate)
+
+            # return HttpResponse(sum(total_demand))
             
-            class Particle:
-                def __init__(self,x0):
-                    self.position_i=[]          # particle position
-                    self.velocity_i=[]          # particle velocity
-                    self.pos_best_i=[]          # best position individual
-                    self.err_best_i=-1          # best error individual
-                    self.err_i=-1               # error individual
+            # grafik orders lost
+            f_lost = plt.figure(figsize=(6, 4))
+            gs = f_lost.add_gridspec(1, 1)
+            ax = f_lost.add_subplot(gs[0, 0])
+            sns.distplot(orders_lost_list,kde=False, color = "#097969")
+            ax.set_title(f'Lost Order : Mean {np.mean(orders_lost_list):.3f}')
+            ax.axvline(x = np.mean(orders_lost_list), color='k', alpha = .5, ls = '--')
+            plt.tight_layout()
+            flike = io.BytesIO()
+            f_lost.savefig(flike)
+            simulation_lost_plot = base64.b64encode(flike.getvalue()).decode()
+            # plt.hist(orders_lost_list)
+            # plt.xlabel('Orders Lost')
+            # plt.ylabel('Frequency')
 
-                    for i in range(0,num_dimensions):
-                        self.velocity_i.append(random.uniform(-1,1))
-                        self.position_i.append(x0[i])
+            # flike = io.BytesIO()
+            # plt.savefig(flike)
+            # simulation_lost_plot = base64.b64encode(flike.getvalue()).decode()
+            # plt.switch_backend('agg')
+            plt.clf()
 
-                # evaluate current fitness
-                def evaluate(self,costFunc):
-                    self.err_i=costFunc(self.position_i)
+            # grafik biaya inventory
+            # plt.hist(tp_list)
+            inventory_cost_list = calculate_inventory_cost(data_list, to_list)
+            plt.hist(inventory_cost_list, color = "#097969")
+            plt.xlabel('Inventory Cost')
+            plt.ylabel('Frequency')
 
-                    # check to see if the current position is an individual best
-                    if self.err_i < self.err_best_i or self.err_best_i==-1:
-                        self.pos_best_i=self.position_i
-                        self.err_best_i=self.err_i
+            flike = io.BytesIO()
+            plt.savefig(flike)
+            biaya_inventory_plot = base64.b64encode(flike.getvalue()).decode()
+            plt.switch_backend('agg')
+            plt.clf()
 
-                # update new particle velocity
-                def update_velocity(self,pos_best_g):
-                    w=0.5       # constant inertia weight (how much to weigh the previous velocity)
-                    c1=1        # cognative constant
-                    c2=2        # social constant
+            # Mencari to paling minimal
+            # to_min_index = inventory_cost_list.index(min(inventory_cost_list))
+            # to_min = to_list[to_min_index]
+            to_min = best_to
 
-                    for i in range(0,num_dimensions):
-                        r1=random.random()
-                        r2=random.random()
+            # mc_result = data_list[to_min_index]
+            # demand_result = demand_result_list[to_min_index]
 
-                        vel_cognitive=c1*r1*(self.pos_best_i[i]-self.position_i[i])
-                        vel_social=c2*r2*(pos_best_g[i]-self.position_i[i])
-                        self.velocity_i[i]=w*self.velocity_i[i]+vel_cognitive+vel_social
+            # mc_result = data_list[to_min_index]
+            # demand_result = demand_result_list[to_min_index]
+            mc_result = best_product
+            demand_result = best_demand
 
-                # update the particle position based off new velocity updates
-                def update_position(self,bounds):
-                    for i in range(0,num_dimensions):
-                        self.position_i[i]=self.position_i[i]+self.velocity_i[i]
+            # Mencari s dan S berdasarkan to paling minimal
+            R_min, s_min, S_min = find_rss(to_min, mc_result)
 
-                        # adjust maximum position if necessary
-                        if self.position_i[i]>bounds[i][1]:
-                            self.position_i[i]=bounds[i][1]
+            # z = find_rss(to_min, mc_result)
 
-                        # adjust minimum position if neseccary
-                        if self.position_i[i] < bounds[i][0]:
-                            self.position_i[i]=bounds[i][0]
+            # return HttpResponse(z)
 
-            class PSO():
-                def __new__(self,costFunc,x0,bounds,num_particles,maxiter):
-                    global num_dimensions
+            # grafik demand
+            demand_result_filtered = [i for i in demand_result if i != 0]
+            plt.hist(demand_result_filtered, color = "#097969")
+            plt.xlabel('Demand')
+            plt.ylabel('Frequency')
 
-                    num_dimensions=len(x0)
-                    err_best_g=-1                   # best error for group
-                    pos_best_g=[]                   # best position for group
+            flike = io.BytesIO()
+            plt.savefig(flike)
+            demand_plot = base64.b64encode(flike.getvalue()).decode()
+            plt.switch_backend('agg')
+            plt.clf()
 
-                    # establish the swarm
-                    swarm=[]
-                    for i in range(0,num_particles):
-                        swarm.append(Particle(x0))
+            # return HttpResponse(', '.join(map(str, inventory_level_list)))
 
-                    # begin optimization loop
-                    i=0
-                    while i < maxiter:
-                        #print i,err_best_g
-                        # cycle through particles in swarm and evaluate fitness
-                        for j in range(0,num_particles):
-                            swarm[j].evaluate(costFunc)
+            # grafik inventory level
+            # inventory_level_list, tot_dmd, tot_lost = calculate_inventory_levels(demand_result)
 
-                            # determine if current particle is the best (globally)
-                            if swarm[j].err_i < err_best_g or err_best_g == -1:
-                                pos_best_g=list(swarm[j].position_i)
-                                err_best_g=float(swarm[j].err_i)
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(18,6))
+            plt.plot(inventory_level_list, linewidth = 1.5)
+            plt.axhline(max_inventory, linewidth=2, color="grey", linestyle=":")
+            plt.axhline(0, linewidth=2, color="grey", linestyle=":")
+            plt.xlim(0,365)
+            ax.set_ylabel('Inventory Level (units)', fontsize=18)
+            ax.set_xlabel('Day', fontsize=18)
 
-                        # cycle through swarm and update velocities and position
-                        for j in range(0,num_particles):
-                            swarm[j].update_velocity(pos_best_g)
-                            swarm[j].update_position(bounds)
-                        i+=1
-
-                    # print final results
-                    # print ('FINAL:')
-                    # print (pos_best_g)
-                    # print (err_best_g)
-
-                    return err_best_g
+            flike = io.BytesIO()
+            plt.savefig(flike)
+            inventory_level_plot = base64.b64encode(flike.getvalue()).decode()
+            plt.switch_backend('agg')
+            plt.clf()
             
-            def func1(x):
-                # Hitung nilai To
-                to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
-
-                # To = round(to * 100)
-
-                return to
-
-            def func2(x):
-                T_temp = []
-                To_temp = []
-                s_temp = []
-                S_temp = []
-                for i in range(5):
-                    # Hitung nilai To
-                    to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
-                    
-                    if i == 0:
-                        to = to - 0.002
-                    elif i == 1:
-                        to = to - 0.001
-                    elif i == 3:
-                        to = to + 0.001
-                    elif i == 4:
-                        to = to + 0.002
-
-                    # Hitung nilai alpha dan R
-                    alpha = to * biaya_simpan / biaya_kekurangan
-                    z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
-
-                    fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
-                    # wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
-                    wz_alpha = round((fz_alpha - 0.00001), 5)
-
-                    R = round((permintaan_baku * to) + (permintaan_baku * lead_time) + (z_alpha * (math.sqrt(to + lead_time))))
-
-                    # Hitung total biaya total persediaan
-                    N = math.ceil(standar_deviasi * ((math.sqrt(to + lead_time)) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
-
-                    T = (permintaan_baku * harga_material) + (biaya_pesan / to) + (biaya_simpan * (R - (permintaan_baku * lead_time) + (permintaan_baku * to / 2))) + (biaya_kekurangan / to * N)
-
-                    # Hitung nilai XR, XRL, dan sigma_RL
-                    XR = to * permintaan_baku
-                    XRL = (to + lead_time) * permintaan_baku
-                    sigma_RL = (to + lead_time) * standar_deviasi
-
-                    Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / biaya_simpan) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
-                    z = round(math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan)), 2)
-
-                    if z <= 0:
-                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183) + 1.063 - (2.192))), 2)
-                    else: 
-                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
-                    
-
-                    k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
-
-                    So = round(XRL + (k * sigma_RL))
-
-                    To = to * 100
-                    s = round(Qp)
-                    S = round(Sp + Qp)
-
-                    T_temp.append(T)
-                    To_temp.append(To)
-                    s_temp.append(s)
-                    S_temp.append(S)
-                
-                for idx, temp in enumerate(T_temp):
-                    if temp == min(T_temp):
-                        index = idx
-                        break
-
-                return s_temp[index]
-            
-            def func3(x):
-                T_temp = []
-                To_temp = []
-                s_temp = []
-                S_temp = []
-                for i in range(5):
-                    # Hitung nilai To
-                    to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
-
-                    if i == 0:
-                        to = to - 0.002
-                    elif i == 1:
-                        to = to - 0.001
-                    elif i == 3:
-                        to = to + 0.001
-                    elif i == 4:
-                        to = to + 0.002
-
-                    # Hitung nilai alpha dan R
-                    alpha = to * biaya_simpan / biaya_kekurangan
-                    z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
-
-                    fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
-                    # wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
-                    wz_alpha = round((fz_alpha - 0.00001), 5)
-
-                    R = round((permintaan_baku * to) + (permintaan_baku * lead_time) + (z_alpha * (math.sqrt(to + lead_time))))
-
-                    # Hitung total biaya total persediaan
-                    N = math.ceil(standar_deviasi * ((math.sqrt(to + lead_time)) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
-
-                    T = (permintaan_baku * harga_material) + (biaya_pesan / to) + (biaya_simpan * (R - (permintaan_baku * lead_time) + (permintaan_baku * to / 2))) + (biaya_kekurangan / to * N)
-
-                    # Hitung nilai XR, XRL, dan sigma_RL
-                    XR = to * permintaan_baku
-                    XRL = (to + lead_time) * permintaan_baku
-                    sigma_RL = (to + lead_time) * standar_deviasi
-
-                    Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / biaya_simpan) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
-                    z = round(math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan)), 2)
-                    if z <= 0:
-                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183) + 1.063 - (2.192))), 2)
-                    else: 
-                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
-                    k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
-
-                    So = round(XRL + (k * sigma_RL))
-
-                    To = round(to * 100)
-                    s = round(Sp)
-                    S = round(Sp + Qp)
-
-                    T_temp.append(T)
-                    To_temp.append(To)
-                    s_temp.append(s)
-                    S_temp.append(S)
-                
-                for idx, temp in enumerate(T_temp):
-                    if temp == min(T_temp):
-                        index = idx
-                        break
-
-                return S_temp[index]
-            
-            def find_ss(x):
-                # Hitung nilai To
-                to = min_to
-
-                # Hitung nilai alpha dan R
-                alpha = to * biaya_simpan / biaya_kekurangan
-                z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
-
-                # fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
-                fz_alpha = round(norm.pdf(z_alpha , loc = 0 , scale = 1 ), 5)
-                wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
-                # wz_alpha = round((fz_alpha - 0.00001), 5)
-
-                R = round((permintaan_baku * to) + (permintaan_baku * lead_time) + (z_alpha * (math.sqrt(to + lead_time))))
-
-                # Hitung total biaya total persediaan
-                N = math.ceil(standar_deviasi * ((math.sqrt(to + lead_time)) * ((fz_alpha - (z_alpha * wz_alpha)))))
-
-                T = (permintaan_baku * harga_material) + (biaya_pesan / to) + (biaya_simpan * (R - (permintaan_baku * lead_time) + (permintaan_baku * to / 2))) + (biaya_kekurangan / to * N)
-
-                # Hitung nilai XR, XRL, dan sigma_RL
-                XR = to * permintaan_baku
-                XRL = (to + lead_time) * permintaan_baku
-                sigma_RL = (to + lead_time) * standar_deviasi
-
-                Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / (harga_material * biaya_simpan)) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116),2)
-                z = math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan))
-                if z <= 0:
-                    Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / 1) + 1.063 - (2.192 * z))), 2)
-                else:
-                    Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
-
-                k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
-
-                So = round(XRL + (k * sigma_RL),2)
-
-                s = round(Sp,2)
-                S = round(Sp + Qp,2)
-
-                temp = (permintaan_baku * harga_material) + (biaya_pesan / to)
-                return temp, s, S
-            
-            initial=[0,0]               # initial starting location [x1,x2...]
-            bounds=[(-10,10),(-10,10)]  # input bounds [(x1_min,x1_max),(x2_min,x2_max)...]
-            min_to = PSO(func1,initial,bounds,num_particles=15,maxiter=30)
-            s = PSO(func2,initial,bounds,num_particles=15,maxiter=30)
-            S = PSO(func3,initial,bounds,num_particles=15,maxiter=30)
-
-            biaya_inventory = find_ss(x)
-            To = min_to * 100
-
-            biaya_inventory = calculate_inventory_cost(x, min_to)
-
             temp = {
-                'To': round(To),
-                's': round(s),
-                'S': round(S),
-                'nama_barang': nama_barang,
-                'biaya_inventory': round(biaya_inventory),
+                'nama_barang': product["nama_barang"],
 
-                # 'biaya_inventory_min': round(min(inventory_cost_list)),
-                # 'biaya_inventory_mean': round(np.mean(inventory_cost_list)),
-                # 'biaya_inventory_std': round(np.std(inventory_cost_list)),
+                'R': round(R_min),
+                's': round(s_min),
+                'S': round(S_min),
+                'order_lost': round(sum(total_lost) / 12),
+
+                'biaya_inventory_min': round(min(inventory_cost_list)),
+                'biaya_inventory_mean': round(np.mean(inventory_cost_list)),
+                'biaya_inventory_std': round(np.std(inventory_cost_list)),
+
+                'demand_plot': demand_plot,
+                'biaya_inventory_plot': biaya_inventory_plot,
+                'inventory_level_plot': inventory_level_plot,
+                'simulation_lost_plot': simulation_lost_plot,
+
+                'mc_result': mc_result,
+                'demand_result': demand_result,
+                'biaya_penyimpanan': 0,
+                'total_biaya_penyimpanan': round(to_min, 4),
             }
 
             data.append(temp)
-
+                
         context = {
             'data': data,
         }

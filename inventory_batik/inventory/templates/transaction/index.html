@@ -63,19 +63,33 @@
                         transaction.sales.outlet.name }} {% endif %}</td>
                     {% endif %}
                     <td class="text-center">{{ transaction.created_at|date:"d F Y" }}</td>
-                    <td>{% if transaction.type == 'purchase' %} {{ transaction.purchase.item.code }} {% else %} {{
-                        transaction.sales.item.code }} {% endif %}</td>
-                    <td>{% if transaction.type == 'purchase' %} {{ transaction.purchase.item.name }} {% else %} {{
-                        transaction.sales.item.name }} {% endif %}</td>
                     {% if transaction.type == 'purchase' %}
-                    <td class="text-success">Pembelian</td>
+                        <td>{{ transaction.purchase.item.code }}</td>
                     {% else %}
-                    <td class="text-danger">Penjualan</td>
+                        <td>{{ transaction.sales.item.code }}</td>
                     {% endif %}
-                    <td class="text-right">{% if transaction.type == 'purchase' %} {{ transaction.purchase.amount }} {%
-                        else %} - {% endif %}</td>
-                    <td class="text-right">{% if transaction.type == 'sales' %} {{ transaction.sales.amount }} {% else
-                        %} - {% endif %}</td>
+                    {% if transaction.type == 'purchase' %}
+                        <td>{{ transaction.purchase.item.name }}</td>
+                    {% else %}
+                        <td>{{ transaction.sales.item.name }}</td>
+                    {% endif %}
+                    {% if transaction.type == 'purchase' %}
+                        <td class="text-success">Pembelian</td>
+                    {% else %}
+                        <td class="text-danger">Penjualan</td>
+                    {% endif %}
+                    <!-- Masuk -->
+                    {% if transaction.type == 'purchase' %}
+                        <td>{{ transaction.purchase.amount }}</td>
+                    {% else %}
+                        <td>-</td>
+                    {% endif %}
+                    <!-- Keluar -->
+                    {% if transaction.type == 'purchase' %}
+                        <td>-</td>
+                    {% else %}
+                        <td>{{ transaction.sales.amount }}</td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
                 {% else %}
