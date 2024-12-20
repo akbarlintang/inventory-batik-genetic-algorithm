@@ -246,3 +246,43 @@ class RecipeForm(ModelForm):
         widgets = {
             'amount': forms.TextInput(attrs={'placeholder': '10', 'class': 'form-control'}),
         }
+
+class EmployeeForm(ModelForm):
+    username = forms.CharField(max_length=150, required=True)
+    email = forms.EmailField(required=True)
+    password = forms.CharField(widget=forms.PasswordInput, required=True)
+    
+    class Meta:
+        model = Employee
+        fields = ['outlet', 'role']  # Include role in the form fields, but it will be hidden in the template
+    
+    def __init__(self, *args, **kwargs):
+        outlet_id = kwargs.pop('outlet_id', None)  # Get outlet_id from the view
+        super().__init__(*args, **kwargs)
+        
+        # Set the role field to 'admin' by default
+        self.fields['role'].initial = 'admin'
+        self.fields['role'].widget = forms.HiddenInput()  # Hide the role field in the UI
+        
+        # If outlet_id is provided, autofill the outlet field
+        if outlet_id:
+            self.fields['outlet'].initial = Outlet.objects.get(id=outlet_id)
+            self.fields['outlet'].widget = forms.HiddenInput()  # Optionally, hide the outlet field in the UI
+    
+    def save(self, commit=True):
+        # First create the User
+        user = User.objects.create_user(
+            username=self.cleaned_data['username'],
+            password=self.cleaned_data['password'],
+            email=self.cleaned_data['email']
+        )
+        
+        # Now create the Employee object
+        employee = super().save(commit=False)
+        employee.user = user
+        
+        # Save the Employee object
+        if commit:
+            employee.save()
+        
+        return employee

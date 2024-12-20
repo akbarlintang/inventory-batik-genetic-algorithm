@@ -1,0 +1,91 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Outlets {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+
+{% load static %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pt-5">
+    <div class="container">
+        <h1>Formulir Outlet</h1>
+
+        <div class="alert alert-primary" role="alert">
+            <i class="fa fa-info-circle mr-1"></i>
+            Menu ini digunakan untuk menambahkan pengguna pada outlet/cabang yang terpilih.
+        </div>
+
+        <br>
+
+        <div>
+            <!-- meload package untuk merender form field -->
+            {% load widget_tweaks %}
+    
+            <form method="post" novalidate>
+                <!-- menambahkan csrf field untuk keamanan form -->
+                {% csrf_token %}
+    
+                <!-- merender semua field form dari objek TaskForm -->
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% for field in form.hidden_fields %}
+                <div class="form-group">
+                    {% render_field field %}
+                </div>
+                {% endfor %}
+    
+                {% for field in form.visible_fields %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+    
+                    {% if form.is_bound %}
+                        {% if field.errors %}
+                            {% render_field field class="form-control is-invalid" %}
+                            {% for error in field.errors %}
+                            <div class="invalid-feedback">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            {% render_field field class="form-control is-valid" %}
+                        {% endif %}
+                    {% else %}
+                        {% render_field field class="form-control" %}
+                    {% endif %}
+    
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+    
+                <div class="d-flex pt-3">
+                    <a href="{% url 'outlet.index' %}" class="btn btn-danger"><i class="fa fa-arrow-left mr-1"></i>Kembali</a>
+                    <button type="submit" class="btn btn-success">Simpan<i class="fa fa-chevron-circle-right ml-1"></i></button>
+                </div>
+            </form>
+        </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+
+{% load static %}
+
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+{% endblock javascripts %}

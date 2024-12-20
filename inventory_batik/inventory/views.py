@@ -20,6 +20,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Q
 from django.core.serializers import serialize
+from django.urls import reverse
 
 from .models import *
 
@@ -280,11 +281,33 @@ def outlet_get_view(request):
     
     return HttpResponse(data, content_type="text/json-comment-filtered")
 
+def outlet_user_view(request, outlet_id):
+    employees = Employee.objects.filter(outlet=outlet_id)
+    context = {
+        'employees': employees,
+        'outlet_id': outlet_id
+    }
+
+    return render(request, 'outlet/employee/index.html', context)
+
+def outlet_user_create_view(request, outlet_id):
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, outlet_id=outlet_id)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Sukses Menambah Employee baru.')
+            return redirect(reverse('outlet.users.index', kwargs={'outlet_id': outlet_id}))
+    else:
+        form = EmployeeForm(outlet_id=outlet_id)
+
+    # Render the form template with the form context
+    return render(request, 'outlet/employee/form.html', {'form': form})
+
 # Material
 @login_required
 def material_view(request):
-    user_id         = request.user.id
-    materials = Material.objects.filter(user_id=user_id)
+    materials = Material.objects.all()
     context = {
         'materials': materials
     }
@@ -346,8 +369,7 @@ def material_delete_view(request, material_id):
 # Product
 @login_required
 def product_view(request):
-    user_id         = request.user.id
-    items        = Item.objects.filter(type="JADI", user_id=user_id)
+    items        = Item.objects.filter(type="JADI")
     context = {
         'items': items
     }
@@ -455,14 +477,20 @@ def product_recipe_delete_view(request, product_id, material_id):
 # Purchase
 @login_required
 def purchase_view(request):
-    user_id         = request.user.id
-    if request.session.has_key('outlet_id'):
-        if request.session['outlet_id'] == 'all':
-            purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
-        else:
-            purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
+    outlet_id         = request.user.employee.outlet
+    # if request.session.has_key('outlet_id'):
+    #     if request.session['outlet_id'] == 'all':
+    #         purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
+    #     else:
+    #         purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
+    # else:
+    #     purchases = Purchase.objects.filter(user_id=user_id)
+
+    if request.user.employee.role == 'admin':
+        purchases = Purchase.objects.filter(outlet_id=outlet_id).order_by('-created_at')
     else:
-        purchases = Purchase.objects.filter(user_id=user_id)
+        purchases = Purchase.objects.order_by('-created_at')
+    
     context = {
         'purchases': purchases
     }
@@ -525,14 +553,19 @@ def purchase_delete_view(request, purchase_id):
 # Production
 @login_required
 def production_view(request):
-    user_id         = request.user.id
-    if request.session.has_key('outlet_id'):
-        if request.session['outlet_id'] == 'all':
-            productions = Production.objects.filter(user_id=user_id).order_by('-created_at')
-        else:
-            productions = Production.objects.objects.filter(user_id=user_id).order_by('-created_at')
+    outlet_id         = request.user.employee.outlet
+    # if request.session.has_key('outlet_id'):
+    #     if request.session['outlet_id'] == 'all':
+    #         productions = Production.objects.filter(user_id=user_id).order_by('-created_at')
+    #     else:
+    #         productions = Production.objects.objects.filter(user_id=user_id).order_by('-created_at')
+    # else:
+    #     productions = Production.objects.filter(user_id=user_id)
+
+    if request.user.employee.role == 'admin':
+        productions = Production.objects.filter(outlet_id=outlet_id).order_by('-created_at')
     else:
-        productions = Production.objects.filter(user_id=user_id)
+        productions = Production.objects.order_by('-created_at')
 
     context = {
         'productions': productions
@@ -615,14 +648,19 @@ def production_delete_view(request, production_id):
 # Sales
 @login_required
 def sales_view(request):
-    user_id         = request.user.id
-    if request.session.has_key('outlet_id'):
-        if request.session['outlet_id'] == 'all':
-            sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
-        else:
-            sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
+    outlet_id         = request.user.employee.outlet
+    # if request.session.has_key('outlet_id'):
+        # if request.session['outlet_id'] == 'all':
+        #     sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
+        # else:
+        #     sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
+    # else:
+    #     sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
+
+    if request.user.employee.role == 'admin':
+        sales = Sales.objects.filter(outlet_id=outlet_id).order_by('-created_at')
     else:
-        sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
+        sales = Sales.objects.order_by('-created_at')
 
     context = {
         'sales': sales
@@ -712,14 +750,19 @@ def sales_delete_view(request, sales_id):
 # Transaction
 @login_required
 def transaction_view(request):
-    user_id         = request.user.id
-    if request.session.has_key('outlet_id'):
-        if request.session['outlet_id'] == 'all':
-            transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
-        else:
-            transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
+    outlet_id         = request.user.employee.outlet
+    # if request.session.has_key('outlet_id'):
+    #     if request.session['outlet_id'] == 'all':
+    #         transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
+    #     else:
+    #         transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
+    # else:
+    #     transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
+
+    if request.user.employee.role == 'admin':
+        transactions = Transaction.objects.filter(outlet_id=outlet_id).order_by('-created_at')
     else:
-        transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
+        transactions = Transaction.objects.order_by('-created_at')
     
     context = {
         'transactions': transactions

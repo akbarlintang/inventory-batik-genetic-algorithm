@@ -42,6 +42,8 @@ urlpatterns = [
     path('outlet/delete/<int:outlet_id>', outlet_delete_view, name='outlet.delete'),
     path('outlet/select/<outlet_id>', outlet_select_view, name='outlet.select'),
     path('outlet/get', outlet_get_view, name='outlet.get'),
+    path('outlet/users/<int:outlet_id>', outlet_user_view, name='outlet.users.index'),
+    path('outlet/users/create/<int:outlet_id>', outlet_user_create_view, name='outlet.users.create'),
 
     # Material
     path('material/', material_view, name='material.index'),

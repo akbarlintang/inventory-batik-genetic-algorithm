@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db import models
 from .utils import *
 
@@ -124,3 +125,11 @@ class Recipe(models.Model):
 
     class Meta:
         db_table = 'recipes'
+
+class Employee(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    outlet = models.ForeignKey('Outlet', on_delete=models.CASCADE, null=True)
+    role = models.CharField(max_length=255, default='admin')
+
+    class Meta:
+        db_table = 'employee'
