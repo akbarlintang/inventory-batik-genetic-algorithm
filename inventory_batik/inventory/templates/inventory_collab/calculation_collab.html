@@ -1,0 +1,529 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Periodic Review {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+
+{% load static %}
+
+{% load humanize %}
+
+<style>
+    .nav-link {
+        box-shadow: none;
+        border: none;
+    }
+</style>
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pt-5">
+    <div class="container">
+        <h1>Vendor Cost</h1>
+
+        <!-- blok untuk menampilkan notifikasi pesan sukses -->
+        <div>
+            {% if messages %}
+            
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message | safe }}
+                </div>
+                {% endfor %}
+            
+            {% endif %}
+        </div>
+
+        <br>
+        
+        <!-- Tabel RsS periodic review
+        <div>
+            <h4>Hasil RsS Periodic Review</h4>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No.</th>
+                        <th class="text-center">Product Name</th>
+                        <th width="15%" class="text-center">Biaya Order</th>
+                        <th width="15%" class="text-center">Biaya Simpan</th>
+                        <th width="15%" class="text-center">Biaya Kekurangan</th>
+                        <th width="15%" class="text-center">Total Biaya Vendor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data %}
+                        {% for dt in data %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td>{{ dt.nama_barang }}</td>
+                                <td class="text-right">Rp {{ dt.c_order|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_hold|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_stockout|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_total|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Data tidak ditemukan.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div> -->
+
+        <!-- <ul class="nav nav-pills nav-justified mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="initial-calculation" data-toggle="pill" data-target="#initial-calculation" type="button" role="tab" aria-controls="initial-calculation" aria-selected="true">Initial Calculation</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="optimized-calculation" data-toggle="pill" data-target="#optimized-calculation" type="button" role="tab" aria-controls="optimized-calculation" aria-selected="true">Optimized Calculation</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade show active" id="initial-calculation" role="tabpanel" aria-labelledby="initial-calculation-tab">asd</div>
+            <div class="tab-pane fade" id="optimized-calculation" role="tabpanel" aria-labelledby="optimized-calculation-tab">123</div>
+        </div> -->
+
+        <ul class="nav nav-pills nav-justified mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link w-100 active" id="initial-tab" data-toggle="pill" data-target="#initial" type="button" role="tab" aria-controls="initial" aria-selected="true">Initial</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link w-100" id="optimized-tab" data-toggle="pill" data-target="#optimized" type="button" role="tab" aria-controls="optimized" aria-selected="false">Optimized</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade show active" id="initial" role="tabpanel" aria-labelledby="initial-tab">
+                <!-- Tabel simulasi transaksi pusat -->
+                <!-- <h3>INITIAL CALCULATION</h3> -->
+                <h4 class="mt-3">Vendor</h4>
+
+                <div class="mt-3">
+                    <h5>Periodic Review Results</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Order Cost (Rp)</th>
+                                <th width="15%" class="text-center">Hold Cost (Rp)</th>
+                                <th width="15%" class="text-center">Stockout Cost (Rp)</th>
+                                <th width="15%" class="text-center">Total Vendor Cost (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <td class="text-right">{{ dt.first_c_order|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_c_hold|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_c_stockout|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_c_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ first_total_order|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_hold|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_stockout|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_all|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <h5>Transaction Simulation for One Cycle (T)</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Purchases Frequency (k)</th>
+                                <th width="15%" class="text-center">Purchases Total (pcs)</th>
+                                <th width="15%" class="text-center">Stockout Total (pcs)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <td class="text-right">{{ dt.first_purchases_freq|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_purchases_total|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_stockout_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ first_total_purchases_freq|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_purchases_total|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_stockout_total|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if total_data %}
+                    <div class="mt-3">
+                        <h5>Inventory Level Simulation for One Cycle (T)</h5>
+                        <div>
+                            {% for dt in total_data %}
+                                <div class="mt-3">
+                                    <h5>{{ dt.nama_barang }}</h5>
+                                    <img class="img-fluid" src='data:image/png;base64,{{ dt.first_inventory_level_plot }}'>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Tabel simulasi transaksi outlet -->
+                {% if data_all %}
+                    {% for dt_all in data_all %}
+                        <h4 class="mt-6">Outlet {{ dt_all.outlet.name }}</h4>
+
+                        <div class="mt-3">
+                            <h5>Periodic Review Results</h5>
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="5%" class="text-center">No.</th>
+                                        <th class="text-center">Product Name</th>
+                                        <th width="15%" class="text-center">Order Cost (Rp)</th>
+                                        <th width="15%" class="text-center">Hold Cost (Rp)</th>
+                                        <th width="15%" class="text-center">Stockout Cost (Rp)</th>
+                                        <th width="15%" class="text-center">Total Outlet Cost (Rp)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if dt_all.data %}
+                                        {% for dt in dt_all.data %}
+                                            <tr>
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ dt.nama_barang }}</td>
+                                                <td class="text-right">{{ dt.first_c_order|intcomma }}</td>
+                                                <td class="text-right">{{ dt.first_c_hold|intcomma }}</td>
+                                                <td class="text-right">{{ dt.first_c_stockout|intcomma }}</td>
+                                                <td class="text-right">{{ dt.first_c_total|intcomma }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        <tr>
+                                            <td class="text-center" colspan="2">TOTAL</td>
+                                            <td class="text-right">{{ dt_all.first_total_order|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.first_total_hold|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.first_total_stockout|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.first_total_all|intcomma }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5">Data not found.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h5>Transaction Simulation for One Cycle (T)</h5>
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="5%" class="text-center">No.</th>
+                                        <th class="text-center">Product Name</th>
+                                        <th width="15%" class="text-center">Purchases Frequency (k)</th>
+                                        <th width="15%" class="text-center">Purchases Total (pcs)</th>
+                                        <th width="15%" class="text-center">Stockout Total (pcs)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if dt_all.data %}
+                                        {% for dt in dt_all.data %}
+                                            <tr>
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ dt.nama_barang }}</td>
+                                                <td class="text-right">{{ dt.first_purchases_freq|intcomma }}</td>
+                                                <td class="text-right">{{ dt.first_purchases_total|intcomma }}</td>
+                                                <td class="text-right">{{ dt.first_stockout_total|intcomma }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        <tr>
+                                            <td class="text-center" colspan="2">TOTAL</td>
+                                            <td class="text-right">{{ dt_all.first_total_purchases_freq|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.first_total_purchases_total|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.first_total_stockout_total|intcomma }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5">Data not found.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Plotting inventory level -->
+                        <div class="mt-3">
+                            <h5>Purchase Simulation for One Cycle (T)</h5>
+                            <div>
+                                <img class="img-fluid" src='data:image/png;base64,{{ dt_all.restock_plot }}'>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="tab-pane fade" id="optimized" role="tabpanel" aria-labelledby="optimized-tab">
+                <!-- <h3>OPTIMIZED CALCULATION</h3> -->
+                <!-- Tabel simulasi transaksi pusat -->
+                <h4 class="mt-3">Vendor</h4>
+
+                <div class="mt-3">
+                    <h5>Periodic Review Results</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Order Cost (Rp)</th>
+                                <th width="15%" class="text-center">Hold Cost (Rp)</th>
+                                <th width="15%" class="text-center">Stockout Cost (Rp)</th>
+                                <th width="15%" class="text-center">Total Vendor Cost (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <td class="text-right">{{ dt.c_order|intcomma }}</td>
+                                        <td class="text-right">{{ dt.c_hold|intcomma }}</td>
+                                        <td class="text-right">{{ dt.c_stockout|intcomma }}</td>
+                                        <td class="text-right">{{ dt.c_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ total_order|intcomma }}</td>
+                                    <td class="text-right">{{ total_hold|intcomma }}</td>
+                                    <td class="text-right">{{ total_stockout|intcomma }}</td>
+                                    <td class="text-right">{{ total_all|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3">
+                    <h5>Transaction Simulation for One Cycle (T)</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Purchases Frequency (k)</th>
+                                <th width="15%" class="text-center">Purchases Total (pcs)</th>
+                                <th width="15%" class="text-center">Stockout Total (pcs)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <td class="text-right">{{ dt.purchases_freq|intcomma }}</td>
+                                        <td class="text-right">{{ dt.purchases_total|intcomma }}</td>
+                                        <td class="text-right">{{ dt.stockout_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ total_purchases_freq|intcomma }}</td>
+                                    <td class="text-right">{{ total_purchases_total|intcomma }}</td>
+                                    <td class="text-right">{{ total_stockout_total|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if total_data %}
+                    <div class="mt-3">
+                        <h5>Inventory Level Simulation for One Cycle (T)</h5>
+                        <div>
+                            {% for dt in total_data %}
+                                <div class="mt-3">
+                                    <h5>{{ dt.nama_barang }}</h5>
+                                    <img class="img-fluid" src='data:image/png;base64,{{ dt.inventory_level_plot }}'>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- {% if outlet_inventory_levels %}
+                    <div class="mt-3">
+                        <h5>Simulasi Inventory Level per Outlet</h5>
+                        <div>
+                            {% for outlet_data in outlet_inventory_levels.values %}
+                                <div class="mt-3">
+                                    <h5>Outlet: {{ outlet_data.outlet_name }}</h5>
+                                    <img class="img-fluid" src='data:image/png;base64,{{ outlet_data.inventory_level_plot }}'>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %} -->
+
+                <!-- Tabel simulasi transaksi outlet -->
+                {% if data_all %}
+                    {% for dt_all in data_all %}
+                        <h4 class="mt-6">Outlet {{ dt_all.outlet.name }}</h4>
+
+                        <div class="mt-3">
+                            <h5>Periodic Review Results</h5>
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="5%" class="text-center">No.</th>
+                                        <th class="text-center">Product Name</th>
+                                        <th width="15%" class="text-center">Order Cost (Rp)</th>
+                                        <th width="15%" class="text-center">Hold Cost (Rp)</th>
+                                        <th width="15%" class="text-center">Stockout Cost (Rp)</th>
+                                        <th width="15%" class="text-center">Total Outlet Cost (Rp)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if dt_all.data %}
+                                        {% for dt in dt_all.data %}
+                                            <tr>
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ dt.nama_barang }}</td>
+                                                <td class="text-right">{{ dt.c_order|intcomma }}</td>
+                                                <td class="text-right">{{ dt.c_hold|intcomma }}</td>
+                                                <td class="text-right">{{ dt.c_stockout|intcomma }}</td>
+                                                <td class="text-right">{{ dt.c_total|intcomma }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        <tr>
+                                            <td class="text-center" colspan="2">TOTAL</td>
+                                            <td class="text-right">{{ dt_all.total_order|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.total_hold|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.total_stockout|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.total_all|intcomma }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5">Data not found.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <h5>Transaction Simulation for One Cycle (T)</h5>
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="5%" class="text-center">No.</th>
+                                        <th class="text-center">Product Name</th>
+                                        <th width="15%" class="text-center">Purchases Frequency (k)</th>
+                                        <th width="15%" class="text-center">Purchases Total (pcs)</th>
+                                        <th width="15%" class="text-center">Stockout Total (pcs)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if dt_all.data %}
+                                        {% for dt in dt_all.data %}
+                                            <tr>
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ dt.nama_barang }}</td>
+                                                <td class="text-right">{{ dt.purchases_freq|intcomma }}</td>
+                                                <td class="text-right">{{ dt.purchases_total|intcomma }}</td>
+                                                <td class="text-right">{{ dt.stockout_total|intcomma }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        <tr>
+                                            <td class="text-center" colspan="2">TOTAL</td>
+                                            <td class="text-right">{{ dt_all.total_purchases_freq|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.total_purchases_total|intcomma }}</td>
+                                            <td class="text-right">{{ dt_all.total_stockout_total|intcomma }}</td>
+                                        </tr>
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5">Data not found.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Plotting inventory level -->
+                        <div class="mt-3">
+                            <h5>Purchase Simulation for One Cycle (T)</h5>
+                            <div>
+                                <img class="img-fluid" src='data:image/png;base64,{{ dt_all.restock_plot }}'>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <!-- Plotting inventory level -->
+                <!-- <div class="mt-6">
+                    <h4>Simulasi Inventory Level Selama Satu Siklus (T)</h4>
+                    <div>
+                        {% for dt in data %}
+                            <div class="mt-3">
+                                <h5>{{ dt.nama_barang }}</h5>
+                                <img class="img-fluid" src='data:image/png;base64,{{ dt.inventory_level_plot }}'>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div> -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+
+{% load static %}
+
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+{% endblock javascripts %}

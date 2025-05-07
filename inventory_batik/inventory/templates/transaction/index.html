@@ -13,10 +13,10 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Daftar Transaksi</h1>
+        <h1>Transaction List</h1>
         <div class="alert alert-primary" role="alert">
             <i class="fa fa-info-circle mr-1"></i>
-            Menu ini digunakan untuk menampilkan data transaksi yang dimiliki.
+            This menu is used to display the transaction data.
         </div>
 
         <!-- blok untuk menampilkan notifikasi pesan sukses -->
@@ -37,19 +37,44 @@
 
         <br>
 
+        <!-- <input type="text" name="daterange" value="01/01/2015 - 01/31/2015" /> -->
+
+        <form method="get" action="{% url 'transaction.index' %}">
+            <div class="row">
+                <div class="col-3">
+                    <div class="form-group">
+                        <label for="start_date">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" id="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <div class="col-3">
+                    <div class="form-group">
+                        <label for="end_date">End Date</label>
+                        <input type="date" name="end_date" class="form-control" id="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <div class="col-3 my-auto">
+                    <button type="submit" class="btn btn-primary">Filter <i class="fa fa-filter"></i></button>
+                </div>
+            </div>
+        </form>
+
         <table class="table table-bordered table-striped" id="datatable">
             <thead>
                 <tr>
                     <th width="5%" class="text-center">ID</th>
-                    {% if request.session.outlet_id == 'all' %}
-                    <th class="text-center">Lokasi Outlet</th>
+                    {% if request.user.employee.role == 'superadmin' %}
+                        <th class="text-center">Outlet</th>
                     {% endif %}
-                    <th class="text-center">Tanggal</th>
-                    <th class="text-center">Kode Item</th>
-                    <th class="text-center">Nama</th>
-                    <th class="text-center">Tipe Transaksi</th>
-                    <th class="text-center">Masuk</th>
-                    <th class="text-center">Keluar</th>
+                    <th class="text-center">Date</th>
+                    <th class="text-center">Item Code</th>
+                    <th class="text-center">Name</th>
+                    <th class="text-center">Transaction Type</th>
+                    <th class="text-center">In</th>
+                    <th class="text-center">Out</th>
+                    <!-- <th class="text-center">Stock</th> -->
                 </tr>
             </thead>
             <tbody>
@@ -58,9 +83,14 @@
                 {% for transaction in transactions %}
                 <tr>
                     <td class="text-center">{{ forloop.counter }}</td>
-                    {% if request.session.outlet_id == 'all' %}
-                    <td>{% if transaction.type == 'purchase' %} {{ transaction.purchase.outlet.name }} {% else %} {{
-                        transaction.sales.outlet.name }} {% endif %}</td>
+                    {% if request.user.employee.role == 'superadmin' %}
+                    <td>
+                        {% if transaction.type == 'purchase' %}
+                            {{ transaction.purchase.outlet }}
+                        {% else %}
+                            {{ transaction.sales.outlet }}
+                        {% endif %}
+                    </td>
                     {% endif %}
                     <td class="text-center">{{ transaction.created_at|date:"d F Y" }}</td>
                     {% if transaction.type == 'purchase' %}
@@ -90,6 +120,7 @@
                     {% else %}
                         <td>{{ transaction.sales.amount }}</td>
                     {% endif %}
+                    <!-- <td>{{ transaction.stock }}</td> -->
                 </tr>
                 {% endfor %}
                 {% else %}
@@ -111,6 +142,7 @@
 
 <script>
     let table = new DataTable('#datatable');
+    $('input[name="daterange"]').daterangepicker();
 </script>
 
 {% endblock javascripts %}

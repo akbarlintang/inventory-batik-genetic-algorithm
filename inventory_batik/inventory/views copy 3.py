@@ -917,8 +917,6 @@ def log_scaled_mutation(individual, mutation_rate, sigma=0.1, lower_bound=1, upp
     mutated_individual = list(individual)  # Convert tuple to list for mutation
     
     for i, gene in enumerate(mutated_individual):
-        if i == 5:
-            continue  # skip mutation for T
         if isinstance(gene, (int, float)):  # Ensure the gene is a number
             if random.random() < mutation_rate:
                 # Apply log-scaled mutation
@@ -931,7 +929,7 @@ def log_scaled_mutation(individual, mutation_rate, sigma=0.1, lower_bound=1, upp
                 mutated_individual[i] = mutated_gene
 
     # Ensure S > s after mutation
-    _, _, temp_R, temp_s, temp_S, temp_T, purchases_freq, tot_lost = mutated_individual
+    _, _, temp_R, temp_s, temp_S, purchases_freq, tot_lost = mutated_individual
     mutated_individual[4] = max(temp_s + 1, temp_S)  # Ensure S > s
 
     return tuple(mutated_individual)
@@ -1123,7 +1121,6 @@ def genetic_algorithm(product_data, population_size, num_generations, crossover_
     first_tot_cost, first_to = per_review(product_data, daily_sales)
     first_R_min, first_s_min, first_S_min = find_rss(first_to, product_data)
     first_R, first_s, first_S = round(first_R_min), round(first_s_min), round(first_S_min)
-    first_T = int(random.choice([90, 120, 150, 180]))
     first_product = product_data
     first_demand = daily_sales
 
@@ -1137,21 +1134,21 @@ def genetic_algorithm(product_data, population_size, num_generations, crossover_
         rand_R = random.randint(first_R - variation, first_R + variation)
         rand_s = random.randint(max(2, first_s - stock_variation), first_s + stock_variation)
         rand_S = random.randint(max(rand_s + 1, first_S), first_S + stock_variation)
-        rand_T = int(random.choice([90, 120, 150, 180]))
+        rand_T = random.choice([90, 120, 150, 180])
 
-        pop_inventory_level_list, _, pop_tot_lost, _, pop_purchases_freq, pop_purchases_total, pop_restock_data = calculate_inventory_levels_rss(daily_sales[:rand_T], rand_R, rand_s, rand_S)
+        pop_inventory_level_list, _, pop_tot_lost, _, pop_purchases_freq, pop_purchases_total, pop_restock_data = calculate_inventory_levels_rss(daily_sales[:180], rand_R, rand_s, rand_S)
         
         # population.append((product_data, daily_sales, rand_R, rand_s, rand_S))
-        population.append((product_data, daily_sales, rand_R, rand_s, rand_S, rand_T, pop_purchases_freq, pop_tot_lost))
+        population.append((product_data, daily_sales, rand_R, rand_s, rand_S, pop_purchases_freq, pop_tot_lost))
     
-    first_inventory_level_list, _, first_tot_lost, _, first_purchases_freq, first_purchases_total, first_restock_data = calculate_inventory_levels_rss(first_demand[:first_T], first_R, first_s, first_S)
-    first_total_cost, first_to = min_fitness(first_product, first_demand, first_R, first_s, first_S, first_T, first_purchases_freq, first_tot_lost)
+    first_inventory_level_list, _, first_tot_lost, _, first_purchases_freq, first_purchases_total, first_restock_data = calculate_inventory_levels_rss(first_demand[:180], first_R, first_s, first_S)
+    first_total_cost, first_to = min_fitness(first_product, first_demand, first_R, first_s, first_S, first_purchases_freq, first_tot_lost)
     
     for generation in range(num_generations):
         fitness_scores = []
         for individual in population:
-            product_sim, demand_result, init_R, init_s, init_S, init_T, init_purchases_freq, init_tot_lost = individual
-            total_cost, total_stockout = min_fitness(product_sim, demand_result, init_R, init_s, init_S, init_T, init_purchases_freq, init_tot_lost)
+            product_sim, demand_result, init_R, init_s, init_S, init_purchases_freq, init_tot_lost = individual
+            total_cost, total_stockout = min_fitness(product_sim, demand_result, init_R, init_s, init_S, init_purchases_freq, init_tot_lost)
             fitness_scores.append((total_cost, total_stockout))
         
         best_solution = min(zip(population, fitness_scores), key=lambda x: (x[1][0], x[1][1]))[0]
@@ -1174,9 +1171,9 @@ def genetic_algorithm(product_data, population_size, num_generations, crossover_
                 child1, child2 = parent1, parent2
 
             def fix_S_s(individual):
-                prod, demand, R, s, S, T, purchases_freq, tot_lost = individual
+                prod, demand, R, s, S, purchases_freq, tot_lost = individual
                 S = max(s + 1, S)
-                return (prod, demand, R, s, S, T, purchases_freq, tot_lost)
+                return (prod, demand, R, s, S, purchases_freq, tot_lost)
 
             child1 = fix_S_s(child1)
             child2 = fix_S_s(child2)
@@ -1189,22 +1186,21 @@ def genetic_algorithm(product_data, population_size, num_generations, crossover_
         
         population = offspring
     
-    best_product, best_demand, best_R, best_s, best_S, best_T, best_purchases_freq, best_tot_lost = best_solution
-    best_total_cost, best_to = min_fitness(best_product, best_demand, best_R, best_s, best_S, best_T, best_purchases_freq, best_tot_lost)
+    best_product, best_demand, best_R, best_s, best_S, best_purchases_freq, best_tot_lost = best_solution
+    best_total_cost, best_to = min_fitness(best_product, best_demand, best_R, best_s, best_S, best_purchases_freq, best_tot_lost)
 
     best_R = round(best_R)
     best_s = round(best_s)
     best_S = round(best_S)
-    best_T = round(best_T)
     
-    inventory_level_list, tot_dmd, tot_lost, max_inventory, purchases_freq, purchases_total, restock_data = calculate_inventory_levels_rss(best_demand[:best_T], best_R, best_s, best_S)
+    inventory_level_list, tot_dmd, tot_lost, max_inventory, purchases_freq, purchases_total, restock_data = calculate_inventory_levels_rss(best_demand[:180], best_R, best_s, best_S)
     
     total_biaya_penyimpanan_list, to_penyimpanan_list, data_list, demand_result_list, orders_lost_list = [], [], [], [], []
     
     return (total_biaya_penyimpanan_list, to_penyimpanan_list, data_list, demand_result_list, orders_lost_list, 
             inventory_level_list, tot_dmd, best_tot_lost, max_inventory, best_purchases_freq, purchases_total, restock_data,
-            best_product, best_demand, best_total_cost, best_to, best_R, best_s, best_S, best_T,
-            first_R, first_s, first_S, first_T, first_purchases_freq, first_tot_lost, first_demand, first_purchases_total,
+            best_product, best_demand, best_total_cost, best_to, best_R, best_s, best_S, 
+            first_R, first_s, first_S, first_purchases_freq, first_tot_lost, first_demand, first_purchases_total,
             first_inventory_level_list, first_restock_data)
 
 # Periodic Review Function
@@ -1228,8 +1224,8 @@ def per_review(product, demand):
     return T, to
 
 # Periodic Review Function
-def min_fitness(product, demand, init_R, init_s, init_S, init_T, purchases_freq, tot_lost):
-    half_demand = demand[:init_T]
+def min_fitness(product, demand, init_R, init_s, init_S, purchases_freq, tot_lost):
+    half_demand = demand[:180]
 
     if purchases_freq <= 0:
         purchases_freq = 1
@@ -1238,11 +1234,11 @@ def min_fitness(product, demand, init_R, init_s, init_S, init_T, purchases_freq,
 
     mean_daily_demand = np.mean(half_demand)
     std_dev_monthly_demand = np.std(half_demand, ddof=1)
-    std_dev_daily_demand = std_dev_monthly_demand / np.sqrt(init_T)
-    total_daily_demand = round(sum(half_demand) / init_T)
+    std_dev_daily_demand = std_dev_monthly_demand / np.sqrt(180)
+    total_daily_demand = round(sum(half_demand) / 180)
 
     # Cost Calculation
-    c_order = 35000 * (init_T / (purchases_freq * init_R))
+    c_order = 35000 * (180 / (purchases_freq * init_R))
     c_hold = product["biaya_simpan"] * round((init_S + init_s) / 2) + round((tot_demand * init_R) / purchases_freq)
     
     total_stockout = round(sum(tot_lost))
@@ -1519,7 +1515,7 @@ def periodic_view(request):
             product["lead_time"] = x['lead_time']
             product["standar_deviasi"] = x['standar_deviasi']
             
-            tp_list, to_list, data_list, demand_result_list, orders_lost_list, inventory_level_list, total_demand, total_lost, max_inventory, purchases_freq, purchases_total, restock_data, best_product, best_demand, best_total_cost, best_to, best_R, best_s, best_S, best_T, first_R, first_s, first_S, first_T, first_purchases_freq, first_total_lost, first_demand, first_purchases_total, first_inventory_level_list, first_restock_data = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate)
+            tp_list, to_list, data_list, demand_result_list, orders_lost_list, inventory_level_list, total_demand, total_lost, max_inventory, purchases_freq, purchases_total, restock_data, best_product, best_demand, best_total_cost, best_to, best_R, best_s, best_S, first_R, first_s, first_S, first_purchases_freq, first_total_lost, first_demand, first_purchases_total, first_inventory_level_list, first_restock_data = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate)
             # pop, fit_score, pop_size = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate)
 
             # best_demand = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate)
@@ -1599,7 +1595,7 @@ def periodic_view(request):
             plt.plot(inventory_level_list, linewidth = 1.5)
             plt.axhline(best_S, linewidth=2, color="grey", linestyle=":")
             plt.axhline(0, linewidth=2, color="grey", linestyle=":")
-            plt.xlim(0,best_T)
+            plt.xlim(0,180)
             ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
             ax.set_xlabel('Day', fontsize=18)
 
@@ -1735,15 +1731,15 @@ def inventory_collab_view(request):
                     (tp_list, to_list, data_list, demand_result_list, orders_lost_list, 
                     inventory_level_list, total_demand, total_lost, max_inventory, 
                     purchases_freq, purchases_total, restock_data, best_product, best_demand, 
-                    best_total_cost, best_to, best_R, best_s, best_S, best_T, first_R, first_s, first_S, first_T, first_purchases_freq, first_total_lost, first_demand, first_purchases_total, first_inventory_level_list, first_restock_data) = genetic_algorithm(
+                    best_total_cost, best_to, best_R, best_s, best_S, first_R, first_s, first_S, first_purchases_freq, first_total_lost, first_demand, first_purchases_total, first_inventory_level_list, first_restock_data) = genetic_algorithm(
                         product, pop_size, num_generations, crossover_rate, mutation_rate, daily_sales
                     )
 
-                    # temp = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate, daily_sales)
+                    # temp, temp2 = genetic_algorithm(product, pop_size, num_generations, crossover_rate, mutation_rate, daily_sales)
 
                     # temp_data = {
                     #     'purchases_freq': temp,
-                    #     # 'tot_lost': temp2
+                    #     'tot_lost': temp2
                     # }
 
                     # return JsonResponse(temp_data)
@@ -1752,7 +1748,7 @@ def inventory_collab_view(request):
                     # return HttpResponse(', '.join(map(str, sales_list)))
 
                     # FIRST DATA
-                    first_half_demand = first_demand[:first_T]
+                    first_half_demand = first_demand[:180]
                     first_total_demand = round(sum(first_half_demand))
 
                     # Separate non-zero values and zeros
@@ -1767,26 +1763,26 @@ def inventory_collab_view(request):
 
                     # Processing stock and storing history
                     first_stock = 0
-                    for i in range(first_T):
+                    for i in range(180):
                         first_stock += round(first_restock_result[i])  # Add the value from array1
                         first_stock -= round(first_restock_data[i])  # Subtract the value from array2
                         first_stock_history.append(first_stock)  # Store the updated stock value
 
                     # Add the product's inventory level to the combined list (sum or average)
-                    for day in range(min(first_T, len(first_inventory_level_list))):  # Limit to first_T days
+                    for day in range(min(180, len(first_inventory_level_list))):  # Limit to 180 days
                         first_combined_inventory_level[day] += first_inventory_level_list[day]
 
                     first_mean_daily_demand = np.mean(first_half_demand)
                     first_std_dev_monthly_demand = np.std(first_half_demand, ddof=1)
-                    first_std_dev_daily_demand = first_std_dev_monthly_demand / np.sqrt(first_T)
-                    first_total_daily_demand = round(sum(first_half_demand) / first_T)
+                    first_std_dev_daily_demand = first_std_dev_monthly_demand / np.sqrt(180)
+                    first_total_daily_demand = round(sum(first_half_demand) / 180)
 
                     # Plotting inventory level for outlet
                     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(18, 6))
                     plt.plot(first_inventory_level_list, linewidth=1.5)
                     plt.axhline(first_S, linewidth=2, color="grey", linestyle=":")
                     plt.axhline(0, linewidth=2, color="grey", linestyle=":")
-                    plt.xlim(0, first_T)
+                    plt.xlim(0, 180)
                     ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
                     ax.set_xlabel('Day', fontsize=18)
 
@@ -1802,7 +1798,7 @@ def inventory_collab_view(request):
                         first_purchases_freq = 1
 
                     # Calculate biaya order
-                    first_c_order = 35000 * (first_T / (first_purchases_freq * first_R))
+                    first_c_order = 35000 * (180 / (first_purchases_freq * first_R))
 
                     # Calculate biaya simpan
                     first_c_hold = product["biaya_simpan"] * ((first_S + first_s) / 2) + ((first_total_demand * first_R) / first_purchases_freq)
@@ -1823,7 +1819,7 @@ def inventory_collab_view(request):
                     # END FIRST DATA
 
                     # BEST DATA
-                    half_demand = best_demand[:best_T]
+                    half_demand = best_demand[:180]
                     tot_demand = round(sum(half_demand))
 
                     # Separate non-zero values and zeros
@@ -1838,7 +1834,7 @@ def inventory_collab_view(request):
 
                     # Processing stock and storing history
                     stock = 0
-                    for i in range(best_T):
+                    for i in range(180):
                         stock += round(restock_result[i])  # Add the value from array1
                         stock -= round(restock_data[i])  # Subtract the value from array2
                         stock_history.append(stock)  # Store the updated stock value
@@ -1847,20 +1843,20 @@ def inventory_collab_view(request):
                     # return HttpResponse(restock_data)
 
                     # Add the product's inventory level to the combined list (sum or average)
-                    for day in range(min(best_T, len(inventory_level_list))):  # Limit to best_T days
+                    for day in range(min(180, len(inventory_level_list))):  # Limit to 180 days
                         combined_inventory_level[day] += inventory_level_list[day]
 
                     mean_daily_demand = np.mean(half_demand)
                     std_dev_monthly_demand = np.std(half_demand, ddof=1)
-                    std_dev_daily_demand = std_dev_monthly_demand / np.sqrt(best_T)
-                    total_daily_demand = round(sum(half_demand) / best_T)
+                    std_dev_daily_demand = std_dev_monthly_demand / np.sqrt(180)
+                    total_daily_demand = round(sum(half_demand) / 180)
 
                     # Plotting inventory level for outlet
                     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(18, 6))
                     plt.plot(inventory_level_list, linewidth=1.5)
                     plt.axhline(best_S, linewidth=2, color="grey", linestyle=":")
                     plt.axhline(0, linewidth=2, color="grey", linestyle=":")
-                    plt.xlim(0, best_T)
+                    plt.xlim(0, 180)
                     ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
                     ax.set_xlabel('Day', fontsize=18)
 
@@ -1874,7 +1870,7 @@ def inventory_collab_view(request):
                         purchases_freq = 1
                     
                     # Cost Calculation
-                    c_order = 35000 * (best_T / (purchases_freq * best_R))
+                    c_order = 35000 * (180 / (purchases_freq * best_R))
                     c_hold = product["biaya_simpan"] * round((best_S + best_s) / 2) + round((tot_demand * best_R) / purchases_freq)
                     
                     total_stockout = round(sum(total_lost))
@@ -1901,7 +1897,6 @@ def inventory_collab_view(request):
                         'first_stockout_mean': first_total_stockout,
                         'first_restock_data': [a - b for a, b in zip(half_demand, first_restock_data)],
                         'first_stock_history': first_stock_history,
-                        'first_timespan': first_T,
                         'c_order': round(c_order),
                         'c_hold': round(c_hold),
                         'c_stockout': round(c_stockout),
@@ -1911,8 +1906,7 @@ def inventory_collab_view(request):
                         'stockout_total': round(total_stockout),
                         'stockout_mean': total_stockout,
                         'restock_data': [a - b for a, b in zip(half_demand, restock_data)],
-                        'stock_history': stock_history,
-                        'timespan': best_T,
+                        'stock_history': stock_history
                     }
 
                     # Aggregate the data by product name (nama_barang)
@@ -1927,7 +1921,6 @@ def inventory_collab_view(request):
                         total_data_dict[product["nama_barang"]]['first_stockout_mean'] += item_data['first_stockout_mean']
                         total_data_dict[product["nama_barang"]]['first_restock_data'] = [a + b for a, b in zip(total_data_dict[product["nama_barang"]]['first_restock_data'], item_data['first_restock_data'])]
                         total_data_dict[product["nama_barang"]]['first_stock_history'] = [a + b for a, b in zip(total_data_dict[product["nama_barang"]]['first_stock_history'], item_data['first_stock_history'])]
-                        total_data_dict[product["nama_barang"]]['first_timespan'] = item_data['first_timespan'] if item_data['first_timespan'] < total_data_dict[product["nama_barang"]]['first_timespan'] else total_data_dict[product["nama_barang"]]['first_timespan']
                         total_data_dict[product["nama_barang"]]['c_order'] += item_data['c_order']
                         total_data_dict[product["nama_barang"]]['c_hold'] += item_data['c_hold']
                         total_data_dict[product["nama_barang"]]['c_stockout'] += item_data['c_stockout']
@@ -1938,8 +1931,6 @@ def inventory_collab_view(request):
                         total_data_dict[product["nama_barang"]]['stockout_mean'] += item_data['stockout_mean']
                         total_data_dict[product["nama_barang"]]['restock_data'] = [a + b for a, b in zip(total_data_dict[product["nama_barang"]]['restock_data'], item_data['restock_data'])]
                         total_data_dict[product["nama_barang"]]['stock_history'] = [a + b for a, b in zip(total_data_dict[product["nama_barang"]]['stock_history'], item_data['stock_history'])]
-                        # total_data_dict[product["nama_barang"]]['timespan'] = item_data['timespan']
-                        total_data_dict[product["nama_barang"]]['timespan'] = item_data['timespan'] if item_data['timespan'] < total_data_dict[product["nama_barang"]]['timespan'] else total_data_dict[product["nama_barang"]]['timespan']
                     else:
                         total_data_dict[product["nama_barang"]] = {
                             'nama_barang': product["nama_barang"],
@@ -1953,7 +1944,6 @@ def inventory_collab_view(request):
                             'first_stockout_mean': item_data['first_stockout_mean'],
                             'first_restock_data': item_data['first_restock_data'],
                             'first_stock_history': item_data['first_stock_history'],
-                            'first_timespan': item_data['first_timespan'],
                             'c_order': item_data['c_order'],
                             'c_hold': item_data['c_hold'],
                             'c_stockout': item_data['c_stockout'],
@@ -1964,7 +1954,6 @@ def inventory_collab_view(request):
                             'stockout_mean': item_data['stockout_mean'],
                             'restock_data': item_data['restock_data'],
                             'stock_history': item_data['stock_history'],
-                            'timespan': item_data['timespan'],
                         }
                     
 
@@ -1979,7 +1968,6 @@ def inventory_collab_view(request):
                         'first_purchases_total': round(first_purchases_total),
                         'first_stockout_total': round(first_total_stockout),
                         'first_stockout_mean': first_total_stockout,
-                        'first_timespan': first_T,
                         'first_inventory_level_plot': first_inventory_level_plot,
                         'c_order': round(c_order),
                         'c_hold': round(c_hold),
@@ -1989,7 +1977,6 @@ def inventory_collab_view(request):
                         'purchases_total': round(purchases_total),
                         'stockout_total': round(total_stockout),
                         'stockout_mean': total_stockout,
-                        'timespan': best_T,
                         'inventory_level_plot': inventory_level_plot,
                     })
                     # except Exception as e:
@@ -2000,7 +1987,7 @@ def inventory_collab_view(request):
                 # After processing all products for this outlet, generate the plot
                 fig, ax = plt.subplots(figsize=(18, 6))
                 ax.plot(first_combined_inventory_level, linewidth=1.5)
-                ax.set_xlim(0, first_T)  # Ensure it stays within first_T days
+                ax.set_xlim(0, 180)  # Ensure it stays within 180 days
                 ax.set_ylabel('Demand Level (pcs)', fontsize=18)
                 ax.set_xlabel('Day', fontsize=18)
 
@@ -2015,7 +2002,7 @@ def inventory_collab_view(request):
                 # After processing all products for this outlet, generate the plot
                 fig, ax = plt.subplots(figsize=(18, 6))
                 ax.plot(combined_inventory_level, linewidth=1.5)
-                ax.set_xlim(0, best_T)  # Ensure it stays within best_T days
+                ax.set_xlim(0, 180)  # Ensure it stays within 180 days
                 ax.set_ylabel('Demand Level (pcs)', fontsize=18)
                 ax.set_xlabel('Day', fontsize=18)
 
@@ -2082,14 +2069,14 @@ def inventory_collab_view(request):
 
                 # FIRST DATA
                 # Plotting inventory level for vendor
-                first_stock_history_month = dt['first_stock_history'][:dt['first_timespan']]
+                first_stock_history_month = dt['first_stock_history'][:180]
                 first_stockout_mean = dt['first_stockout_mean']
 
                 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(18, 6))
                 plt.plot(first_stock_history_month, linewidth=1.5)
                 # plt.axhline(5000, linewidth=2, color="grey", linestyle=":")
                 # plt.axhline(0, linewidth=2, color="grey", linestyle=":")
-                plt.xlim(0, dt['first_timespan'])
+                plt.xlim(0, 180)
                 ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
                 ax.set_xlabel('Day', fontsize=18)
 
@@ -2114,14 +2101,14 @@ def inventory_collab_view(request):
 
                 # BEST DATA
                 # Plotting inventory level for vendor
-                stock_history_month = dt['stock_history'][:dt['timespan']]
+                stock_history_month = dt['stock_history'][:180]
                 stockout_mean = dt['stockout_mean']
 
                 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(18, 6))
                 plt.plot(stock_history_month, linewidth=1.5)
                 # plt.axhline(5000, linewidth=2, color="grey", linestyle=":")
                 # plt.axhline(0, linewidth=2, color="grey", linestyle=":")
-                plt.xlim(0, dt['timespan'])
+                plt.xlim(0, 180)
                 ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
                 ax.set_xlabel('Day', fontsize=18)
 

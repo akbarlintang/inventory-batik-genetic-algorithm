@@ -33,33 +33,33 @@
             <a class="nav-link {% if 'material' in request.path %} active {% endif %}"
               href="{% url 'material.index' %}">
               <i class="ni ni-basket text-blue"></i>
-              <span class="nav-link-text">Bahan Baku</span>
+              <span class="nav-link-text">Materials</span>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if 'product/' in request.path %} active {% endif %}" href="{% url 'product.index' %}">
               <i class="ni ni-box-2 text-purple"></i>
-              <span class="nav-link-text">Produk</span>
+              <span class="nav-link-text">Products</span>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if 'purchase' in request.path %} active {% endif %}"
               href="{% url 'purchase.index' %}">
               <i class="ni ni-cart text-red"></i>
-              <span class="nav-link-text">Pembelian</span>
+              <span class="nav-link-text">Purchases</span>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if 'production' in request.path %} active {% endif %}"
               href="{% url 'production.index' %}">
               <i class="ni ni-archive-2 text-yellow"></i>
-              <span class="nav-link-text">Produksi</span>
+              <span class="nav-link-text">Productions</span>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if 'sales' in request.path %} active {% endif %}" href="{% url 'sales.index' %}">
               <i class="ni ni-bag-17 text-green"></i>
-              <span class="nav-link-text">Penjualan</span>
+              <span class="nav-link-text">Sales</span>
             </a>
           </li>
 <!--           <li class="nav-item">
@@ -72,24 +72,31 @@
             <a class="nav-link {% if 'transaction' in request.path %} active {% endif %}"
               href="{% url 'transaction.index' %}">
               <i class="ni ni-chart-bar-32 text-purple"></i>
-              <span class="nav-link-text">Transaksi</span>
+              <span class="nav-link-text">Transactions</span>
             </a>
           </li>
 
-          {% if request.user.employee.role == 'superadmin' %}
+          <!-- {% if request.user.employee.role == 'superadmin' %}
           <li class="nav-item">
             <a class="nav-link {% if 'export' in request.path %} active {% endif %}" href="{% url 'export.index' %}">
               <i class="ni ni-curved-next text-green"></i>
-              <span class="nav-link-text">Ekspor Data</span>
+              <span class="nav-link-text">Export Data</span>
             </a>
           </li>
-          {% endif %}
-          {% if request.user.employee.role == 'superadmin' %}
+          {% endif %} -->
           <li class="nav-item">
             <a class="nav-link {% if 'periodic' in request.path %} active {% endif %}"
               href="{% url 'periodic.index' %}">
               <i class="ni ni-chart-pie-35 text-yellow"></i>
               <span class="nav-link-text">Periodic Review</span>
+            </a>
+          </li>
+          {% if request.user.employee.role == 'superadmin' %}
+          <li class="nav-item">
+            <a class="nav-link {% if 'inventory-collaboration' in request.path %} active {% endif %}"
+              href="{% url 'inventory-collab.index' %}">
+              <i class="ni ni-app text-orange"></i>
+              <span class="nav-link-text">Collaborative Inventory</span>
             </a>
           </li>
           {% endif %}

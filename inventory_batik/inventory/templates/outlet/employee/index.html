@@ -13,11 +13,11 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Daftar Pengguna Outlet</h1>
+        <h1>Outlet User List</h1>
 
         <div class="alert alert-primary" role="alert">
             <i class="fa fa-info-circle mr-1"></i>
-            Menu ini digunakan untuk menampilkan data pengguna pada outlet/cabang yang terdaftar.
+            This menu is used to display user data for registered outlets/branches.
         </div>
 
         <!-- blok untuk menampilkan notifikasi pesan sukses -->
@@ -37,7 +37,7 @@
         </div>
 
         <div class="text-right">
-            <a href="{% url 'outlet.users.create' outlet_id %}" class="btn btn-success" data-toggle="tooltip" title="Tambah"><i class="fa fa-plus mr-1"></i>Tambah</a>
+            <a href="{% url 'outlet.users.create' outlet_id %}" class="btn btn-success" data-toggle="tooltip" title="Add"><i class="fa fa-plus mr-1"></i>Add</a>
         </div>
 
         <br>
@@ -46,8 +46,8 @@
             <thead>
                 <tr>
                     <th width="5%" class="text-center">ID</th>
-                    <th width="20%" class="text-center">Nama Pengguna</th>
-                    <th width="20%" class="text-center">Tanggal Bergabung</th>
+                    <th width="20%" class="text-center">Name</th>
+                    <th width="20%" class="text-center">Join Date</th>
                 </tr>
             </thead>
             <tbody>

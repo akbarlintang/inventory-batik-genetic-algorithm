@@ -91,4 +91,7 @@ urlpatterns = [
 
     # Periodic Review
     path('periodic/', periodic_view, name='periodic.index'),
+
+    # Inventory Collaboration
+    path('inventory-collaboration/', inventory_collab_view, name='inventory-collab.index'),
 ]
