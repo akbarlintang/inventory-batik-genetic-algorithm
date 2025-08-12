@@ -13,13 +13,13 @@
     <div class="header-body">
       <div class="row align-items-center py-4">
         <div class="col-lg-12 col-12">
-          <h2 class="text-white d-inline-block mb-0 font-weight-bold">Inventory Management</h2>
+          <h2 class="text-white d-inline-block mb-0 font-weight-bold">Collaborative Inventory Management with Genetic Algorithms</h2>
         </div>
         <div class="col-lg-6 col-7 pt-4">
           <nav aria-label="breadcrumb" class="d-none d-md-inline-block">
             <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
               <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a></li>
-              <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboards</a></li>
+              <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
             </ol>
           </nav>
         </div>
@@ -30,8 +30,8 @@
             <div class="card-body">
               <div class="row py-3">
                 <div class="col">
-                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Penjualan</h6>
-                  <span class="h5">Rp {{ sales|intcomma }}</span>
+                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Sales</h6>
+                  <span class="h5">Rp {{ sales_total|intcomma }}</span>
                 </div>
                 <div class="col-auto">
                   <div class="icon icon-shape bg-gradient-green text-white rounded-circle shadow">
@@ -47,8 +47,8 @@
             <div class="card-body">
               <div class="row py-3">
                 <div class="col">
-                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Pembelian</h6>
-                  <span class="h5 mb-0">Rp {{ purchases|intcomma }}</span>
+                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Purchases</h6>
+                  <span class="h5 mb-0">Rp {{ purchases_total|intcomma }}</span>
                 </div>
                 <div class="col-auto">
                   <div class="icon icon-shape bg-gradient-orange text-white rounded-circle shadow">
@@ -64,7 +64,7 @@
             <div class="card-body">
               <div class="row py-3">
                 <div class="col">
-                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Produk Tersedia</h6>
+                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Available Product</h6>
                   <span class="h5 mb-0">{{ products.count }}</span>
                 </div>
                 <div class="col-auto">
@@ -81,7 +81,7 @@
             <div class="card-body">
               <div class="row py-3">
                 <div class="col">
-                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Ritel Aktif</h6>
+                  <h6 class="card-title text-uppercase text-muted mb-2 ls-1">Active Retail</h6>
                   <span class="h5 mb-0">{{ outlets.count }}</span>
                 </div>
                 <div class="col-auto">
@@ -100,18 +100,72 @@
 
 <div class="container-fluid mt-3">
   <div class="row">
+    <div class="col-12">
+      <h6 class="my-2 text-muted text-uppercase ls-1">Top 3 Sales</h6>
+      <table class="table table-bordered table-striped" id="topSalesTable">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">No.</th>
+                    <th class="text-center">Item Name</th>
+                    <th class="text-center">Sales Total</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+  <div class="row">
     <div class="col-xl-12">
       <div class="card-header bg-transparent">
         <div class="row align-items-center">
           <div class="col">
-            <h6 class="my-2 text-muted text-uppercase ls-1">Ringkasan</h6>
-            <h5 class="h5 mb-0">Diagram Penjualan Bulan ini</h5>
+            <h6 class="my-2 text-muted text-uppercase ls-1">Summary</h6>
+            <h5 class="h5 mb-0">Sales Total</h5>
           </div>
         </div>
       </div>
       <div class="card-body">
         <div class="chart">
-          <canvas id="salesChart" width="400" height="200"></canvas>
+          <canvas id="salesChart" width="400" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <h6 class="my-2 text-muted text-uppercase ls-1">Top 3 Purchases</h6>
+      <table class="table table-bordered table-striped" id="topPurchasesTable">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">No.</th>
+                    <th class="text-center">Item Name</th>
+                    <th class="text-center">Purchases Total</th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-12">
+      <div class="card-header bg-transparent">
+        <div class="row align-items-center">
+          <div class="col">
+            <h6 class="my-2 text-muted text-uppercase ls-1">Summary</h6>
+            <h5 class="h5 mb-0">Purchases Total</h5>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chart">
+          <canvas id="purchasesChart" width="400" height="120"></canvas>
         </div>
       </div>
     </div>
@@ -129,8 +183,7 @@
 {% block javascripts %}
 
 {% load static %}
-<script src="https://keuangan.smkbpdarululum.id/static/assets/vendor/chart.js/dist/Chart.min.js"></script>
-<script src="https://keuangan.smkbpdarululum.id/static/assets/vendor/chart.js/dist/Chart.extension.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.2.0/chart.min.js"></script>
 
 <script>
   // Gunakan JavaScript untuk mengambil data dari endpoint API
@@ -144,12 +197,42 @@
         data: {
           labels: data.item_names,
           datasets: [{
-            label: 'Jumlah Penjualan',
+            label: 'Total Sales',
             data: data.sales_counts,
             backgroundColor: 'orange',
           }],
         },
         options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            },
+          },
+        },
+      });
+    });
+
+  // Gunakan JavaScript untuk mengambil data dari endpoint API
+  fetch('/api/get-purchases-data/')
+    .then(response => response.json())
+    .then(data => {
+      // Gunakan Chart.js untuk membuat diagram batang
+      const ctx = document.getElementById('purchasesChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.item_names,
+          datasets: [{
+            label: 'Total Purchases',
+            data: data.purchases_counts,
+            backgroundColor: 'green',
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
           scales: {
             y: {
               beginAtZero: true,
@@ -158,57 +241,42 @@
         },
       });
     });
-</script>
 
+  fetch('/api/get-top-sales-data/')
+    .then(response => response.json())
+    .then(data => {
+      const tableBody = document.querySelector('#topSalesTable tbody');
+      tableBody.innerHTML = ''; // Clear if needed
 
-
-<script>
-  // jquery function
-  $(document).ready(function () {
-    var ctx = document.getElementById('chart-sales-dark').getContext('2d');
-    var myChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Batik A', 'Batik B', 'Batik C'], //loop through queryset, 
-        datasets: [{
-          label: '# of users',
-          data: [52500, 705000, 360000],
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderColor: 'rgba(255, 99, 132, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
+      data.item_names.forEach((name, index) => {
+        const row = `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${name}</td>
+            <td>${data.sales_counts[index]}</td>
+          </tr>
+        `;
+        tableBody.insertAdjacentHTML('beforeend', row);
+      });
     });
 
-    var ctx = document.getElementById('chart-bars').getContext('2d');
-    var myChart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Batik A', 'Batik B', 'Batik C'], //loop through queryset, 
-        datasets: [{
-          label: '# of users',
-          data: [35, 47, 24],
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true
-          }
-        }
-      }
+    fetch('/api/get-top-purchases-data/')
+    .then(response => response.json())
+    .then(data => {
+      const tableBody = document.querySelector('#topPurchasesTable tbody');
+      tableBody.innerHTML = ''; // Clear if needed
+
+      data.item_names.forEach((name, index) => {
+        const row = `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${name}</td>
+            <td>${data.purchases_counts[index]}</td>
+          </tr>
+        `;
+        tableBody.insertAdjacentHTML('beforeend', row);
+      });
     });
-  });
 </script>
 
 {% endblock javascripts %}

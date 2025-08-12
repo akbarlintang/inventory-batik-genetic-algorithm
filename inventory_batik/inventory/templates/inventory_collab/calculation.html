@@ -1,0 +1,143 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Periodic Review {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+
+{% load static %}
+
+{% load humanize %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pt-5">
+    <div class="container">
+        <h1>Vendor Cost</h1>
+
+        <!-- blok untuk menampilkan notifikasi pesan sukses -->
+        <div>
+            {% if messages %}
+            
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message | safe }}
+                </div>
+                {% endfor %}
+            
+            {% endif %}
+        </div>
+
+        <br>
+        
+        <!-- Tabel RsS periodic review -->
+        <div>
+            <!-- <h4>Hasil RsS Periodic Review</h4> -->
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No.</th>
+                        <th class="text-center">Product Name</th>
+                        <th width="15%" class="text-center">Order Cost</th>
+                        <th width="15%" class="text-center">Hold Cost</th>
+                        <th width="15%" class="text-center">Stockout Cost</th>
+                        <th width="15%" class="text-center">Total Vendor Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data %}
+                        {% for dt in data %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td>{{ dt.nama_barang }}</td>
+                                <td class="text-right">Rp {{ dt.c_order|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_hold|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_stockout|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_total|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Data not found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tabel simulasi transaksi -->
+        <div class="mt-6">
+            <h4>Transaction Simulation for One Cycle (T)</h4>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No.</th>
+                        <th class="text-center">Product Name</th>
+                        <th width="15%" class="text-center">
+                            {% if request.user.employee.role == 'superadmin' %}
+                                Production Frequency
+                            {% else %}
+                                Purchases Frequency
+                            {% endif %}
+                        </th>
+                        <th width="15%" class="text-center">
+                            {% if request.user.employee.role == 'superadmin' %}
+                                Production Total
+                            {% else %}
+                                Purchases Total
+                            {% endif %}
+                        </th>
+                        <th width="15%" class="text-center">Total Stockout</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data %}
+                        {% for dt in data %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td>{{ dt.nama_barang }}</td>
+                                <td class="text-right">{{ dt.purchases_freq|intcomma }}</td>
+                                <td class="text-right">{{ dt.purchases_total|intcomma }}</td>
+                                <td class="text-right">{{ dt.stockout_total|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Data not found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Plotting inventory level -->
+        <div class="mt-6">
+            <h4>Inventory Level Simulation for One Cycle (T)</h4>
+            <div>
+                {% for dt in data %}
+                    <div class="mt-3">
+                        <h5>{{ dt.nama_barang }}</h5>
+                        <img class="img-fluid" src='data:image/png;base64,{{ dt.inventory_level_plot }}'>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+
+{% load static %}
+
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+{% endblock javascripts %}

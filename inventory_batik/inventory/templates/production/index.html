@@ -13,10 +13,10 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Daftar Produksi</h1>
+        <h1>Production List</h1>
         <div class="alert alert-primary" role="alert">
             <i class="fa fa-info-circle mr-1"></i>
-            Menu ini digunakan untuk menampilkan data produksi masing-masing produk yang dimiliki.
+            This menu is used to display the production data for each owned product.
         </div>
 
         <!-- blok untuk menampilkan notifikasi pesan sukses -->
@@ -36,7 +36,7 @@
         </div>
 
         <div class="text-right">
-            <a href="{% url 'production.create' %}" class="btn btn-success" data-toggle="tooltip" title="Tambah"><i class="fa fa-plus mr-1"></i> Tambah</a>
+            <a href="{% url 'production.create' %}" class="btn btn-success" data-toggle="tooltip" title="Add"><i class="fa fa-plus mr-1"></i> Add</a>
         </div>
 
         <br>
@@ -46,12 +46,12 @@
                 <tr>
                     <th width="5%" class="text-center">ID</th>
                     {% if request.session.outlet_id == 'all' %}
-                    <th class="text-center">Lokasi Outlet</th>
+                        <th class="text-center">Outlet</th>
                     {% endif %}
-                    <th class="text-center">Kode Item</th>
-                    <th class="text-center">Nama</th>
-                    <th class="text-center">Jumlah</th>
-                    <th class="text-center">Aksi</th>
+                    <th class="text-center">Item Code</th>
+                    <th class="text-center">Name</th>
+                    <th class="text-center">Amount</th>
+                    <th class="text-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -70,8 +70,8 @@
                         <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
                         <a href="{% url 'production.update' production.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit"><i
                                 class="fa fa-edit"></i></a>
-                        <a href="{% url 'production.delete' production.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Hapus"
-                            onclick="return confirm('Apakah yakin akan menghapus pembelian ini?')"><i
+                        <a href="{% url 'production.delete' production.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Delete"
+                            onclick="return confirm('Are you sure you want to delete this purchase?')"><i
                                 class="fa fa-trash"></i></a>
                     </td>
                 </tr>

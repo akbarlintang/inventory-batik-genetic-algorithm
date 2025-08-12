@@ -13,11 +13,11 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Formulir Outlet</h1>
+        <h1>Outlet User Form</h1>
 
         <div class="alert alert-primary" role="alert">
             <i class="fa fa-info-circle mr-1"></i>
-            Menu ini digunakan untuk menambahkan pengguna pada outlet/cabang yang terpilih.
+            This menu is used to add users to the selected outlet/branch.
         </div>
 
         <br>
@@ -71,8 +71,8 @@
                 {% endfor %}
     
                 <div class="d-flex pt-3">
-                    <a href="{% url 'outlet.index' %}" class="btn btn-danger"><i class="fa fa-arrow-left mr-1"></i>Kembali</a>
-                    <button type="submit" class="btn btn-success">Simpan<i class="fa fa-chevron-circle-right ml-1"></i></button>
+                    <a href="{% url 'outlet.index' %}" class="btn btn-danger"><i class="fa fa-arrow-left mr-1"></i>Back</a>
+                    <button type="submit" class="btn btn-success">Save<i class="fa fa-chevron-circle-right ml-1"></i></button>
                 </div>
             </form>
         </div>

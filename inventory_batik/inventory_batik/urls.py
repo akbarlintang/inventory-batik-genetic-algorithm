@@ -33,7 +33,9 @@ urlpatterns = [
     path('', dashboard_view, name='dashboard'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('api/get-sales-data/', get_sales_data, name='get-sales-data'),
-    path('api/get_purchase_data/', get_purchase_data, name='get_purchase_data'),
+    path('api/get-purchases-data/', get_purchase_data, name='get-purchases-data'),
+    path('api/get-top-sales-data/', get_top_sales_data, name='get-top-sales-data'),
+    path('api/get-top-purchases-data/', get_top_purchases_data, name='get-top-purchases-data'),
     
     # Outlet
     path('outlet/', outlet_view, name='outlet.index'),
@@ -91,4 +93,8 @@ urlpatterns = [
 
     # Periodic Review
     path('periodic/', periodic_view, name='periodic.index'),
+
+    # Inventory Collaboration
+    path('inventory-collaboration/', inventory_collab_view, name='inventory-collab.index'),
+    path('inventory-collaboration/input', inventory_collab_input_view, name='inventory-collab.input'),
 ]

@@ -33,7 +33,23 @@ class Item(models.Model):
 
     def __str__(self):
         return '%s' % self.name
-    
+
+# Through Model to store outlet-specific details
+class OutletItem(models.Model):
+    outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    price = models.IntegerField()  # Outlet-specific price
+    lead_time = models.IntegerField(default=None, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'outlet_items'
+        unique_together = ('outlet', 'item')  # Ensure an item can only appear once per outlet
+
+    def __str__(self):
+        return f"{self.item.name} at {self.outlet.name}"
+
 class Material(models.Model):
     code = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -67,12 +83,13 @@ class Purchase(models.Model):
         db_table = 'purchases'
 
 class Sales(models.Model):
-    outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
+    outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE, related_name='sales_outlet')
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     price = models.CharField(max_length=255)
     amount = models.IntegerField()
     user_id = models.IntegerField()
     unit = models.CharField(max_length=255, choices=UnitTypes.choices(), default=UnitTypes.KG)
+    buyer = models.ForeignKey(Outlet, null=True, blank=True, on_delete=models.SET_NULL, related_name='sales_buyer')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -94,7 +111,7 @@ class Stock(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     amount = models.IntegerField()
-    user_id = models.IntegerField()
+    user_id = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -108,6 +125,7 @@ class Transaction(models.Model):
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, null=True)
     sales = models.ForeignKey(Sales, on_delete=models.CASCADE, null=True)
     type = models.CharField(max_length=255, choices=TypeTypes.choices(), default=TypeTypes.PURCHASE)
+    stock = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

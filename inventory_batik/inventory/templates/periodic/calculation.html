@@ -43,10 +43,10 @@
                     <tr>
                         <th width="5%" class="text-center">No.</th>
                         <th class="text-center">Product Name</th>
-                        <th width="15%" class="text-center">Reorder Point (s)</th>
-                        <th width="15%" class="text-center">Maximum Stock (S)</th>
-                        <th width="15%" class="text-center">Review Interval (R)</th>
-                        <th width="15%" class="text-center">Lost Orders (Monthly)</th>
+                        <th width="15%" class="text-center">Reorder Point (s) (pcs)</th>
+                        <th width="15%" class="text-center">Maximum Stock (S) (pcs)</th>
+                        <th width="15%" class="text-center">Review Interval (R) (Day)</th>
+                        <th width="15%" class="text-center">Lost Orders (Monthly) (Unit)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,10 +55,10 @@
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
                                 <td>{{ dt.nama_barang }}</td>
-                                <td class="text-center">{{ dt.s }} Pcs</td>
-                                <td class="text-center">{{ dt.S }} Pcs</td>
-                                <td class="text-center">{{ dt.R }} Day(s)</td>
-                                <td class="text-center">{{ dt.order_lost }} Unit(s)</td>
+                                <td class="text-center">{{ dt.s }}</td>
+                                <td class="text-center">{{ dt.S }}</td>
+                                <td class="text-center">{{ dt.R }}</td>
+                                <td class="text-center">{{ dt.order_lost }}</td>
                             </tr>
                         {% endfor %}
                     {% else %}
@@ -93,8 +93,8 @@
                     <tr>
                         <th width="5%" class="text-center">No.</th>
                         <th class="text-center">Product Name</th>
-                        <th width="20%" class="text-center">Minimum</th>
-                        <th width="20%" class="text-center">Mean</th>
+                        <th width="20%" class="text-center">Minimum (Rp)</th>
+                        <th width="20%" class="text-center">Mean (Rp)</th>
                         <th width="20%" class="text-center">Std</th>
                     </tr>
                 </thead>
@@ -104,8 +104,8 @@
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
                                 <td>{{ dt.nama_barang }}</td>
-                                <td class="text-right">Rp {{ dt.biaya_inventory_min|intcomma }}</td>
-                                <td class="text-right">Rp {{ dt.biaya_inventory_mean|intcomma }}</td>
+                                <td class="text-right">{{ dt.biaya_inventory_min|intcomma }}</td>
+                                <td class="text-right">{{ dt.biaya_inventory_mean|intcomma }}</td>
                                 <td class="text-right">{{ dt.biaya_inventory_std|intcomma }}</td>
                             </tr>
                         {% endfor %}
@@ -144,7 +144,7 @@
             </div>
         </div>
 
-        <!-- Plotting inventory level -->
+        <!-- Plotting order lost -->
         <div class="mt-6">
             <h4>Simulation Orders Lost Plot</h4>
             <div class="row">
