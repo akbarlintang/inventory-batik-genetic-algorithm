@@ -1072,6 +1072,8 @@ def genetic_algorithm(product_data, population_size, num_generations, crossover_
     first_inventory_level_list, _, first_tot_lost, first_purchases_freq, first_purchases_total, first_restock_data = calculate_first_inventory_levels_rss(first_demand[:first_T], first_purchases[:first_T])
     first_total_cost, first_to = min_fitness(first_product, first_demand, first_R, first_s, first_S, first_T, first_purchases_freq, first_tot_lost)
 
+    # return first_to, first_R, first_s, first_S
+
     # End calculation first timing
     first_end_time = time.time()
     first_calc_duration = first_end_time - first_start_time
@@ -1081,7 +1083,7 @@ def genetic_algorithm(product_data, population_size, num_generations, crossover_
         # R_min, s_min, S_min = find_rss(to, product_data)
         # init_R, init_s, init_S = round(R_min), round(s_min), round(S_min)
         
-        variation = 30
+        variation = 15
         stock_variation = 5000
         rand_R = random.randint(max(1, first_R - variation), first_R + variation)
         rand_s = random.randint(max(2, first_s - stock_variation), first_s + stock_variation)
@@ -1155,7 +1157,7 @@ def genetic_algorithm(product_data, population_size, num_generations, crossover_
     best_calc_duration = best_end_time - best_start_time
     
     total_biaya_penyimpanan_list, to_penyimpanan_list, data_list, demand_result_list, orders_lost_list = [], [], [], [], []
-    
+
     return (total_biaya_penyimpanan_list, to_penyimpanan_list, data_list, demand_result_list, orders_lost_list, 
             inventory_level_list, purchases_list, sales_list, tot_dmd, best_tot_lost, max_inventory, purchases_freq, purchases_total, restock_data,
             best_product, best_demand, best_total_cost, best_to, best_R, best_s, best_S, best_T,
@@ -1590,6 +1592,13 @@ def inventory_collab_view(request):
             first_outlet_inventory_levels = {}
             outlet_inventory_levels = {}
 
+            outlet_first_R = 0
+            outlet_first_s = 0
+            outlet_first_S = 0
+            outlet_best_R = 0
+            outlet_best_s = 0
+            outlet_best_S = 0
+
             data_all = []
             for outlet in outlets:
                 biaya_simpan = 0
@@ -1608,9 +1617,6 @@ def inventory_collab_view(request):
                 else:
                     biaya_order = 10000
 
-                # outlet = outlets[0]
-                data_outlet = []
-                
                 # Initialize an empty list to hold the combined inventory levels for this outlet
                 first_combined_inventory_level = [0] * 60
                 combined_inventory_level = [0] * 60
@@ -1923,8 +1929,16 @@ def inventory_collab_view(request):
                     best_calc_duration += temp_best_end_time - temp_best_start_time
                     # END BEST DATA
 
+                    outlet_first_R = first_R
+                    outlet_first_s = first_s
+                    outlet_first_S = first_S
+                    outlet_best_R = best_R
+                    outlet_best_s = best_s
+                    outlet_best_S = best_S
+
                     # Prepare item data
                     item_data = {
+                        'outlet_id': outlet.id,
                         'first_c_order': round(first_c_order),
                         'first_c_hold': round(first_c_hold),
                         'first_c_stockout': round(first_c_stockout),
@@ -1937,6 +1951,9 @@ def inventory_collab_view(request):
                         'first_stock_history': first_stock_history,
                         'first_timespan': first_T,
                         'first_calc_duration': first_calc_duration,
+                        'outlet_first_R': outlet_first_R,
+                        'outlet_first_s': outlet_first_s,
+                        'outlet_first_S': outlet_first_S,
                         'c_order': round(c_order),
                         'c_hold': round(c_hold),
                         'c_stockout': round(c_stockout),
@@ -1949,6 +1966,9 @@ def inventory_collab_view(request):
                         'stock_history': stock_history,
                         'timespan': best_T,
                         'best_calc_duration': best_calc_duration,
+                        'outlet_best_R': outlet_best_R,
+                        'outlet_best_s': outlet_best_s,
+                        'outlet_best_S': outlet_best_S,
                     }
 
                     # Aggregate the data by product name (nama_barang)
@@ -1965,6 +1985,9 @@ def inventory_collab_view(request):
                         total_data_dict[product["nama_barang"]]['first_stock_history'] = [a + b for a, b in zip(total_data_dict[product["nama_barang"]]['first_stock_history'], item_data['first_stock_history'])]
                         total_data_dict[product["nama_barang"]]['first_timespan'] = item_data['first_timespan'] if item_data['first_timespan'] < total_data_dict[product["nama_barang"]]['first_timespan'] else total_data_dict[product["nama_barang"]]['first_timespan']
                         total_data_dict[product["nama_barang"]]['first_calc_duration'] += item_data['first_calc_duration']
+                        total_data_dict[product["nama_barang"]]['outlet_first_R'] += item_data['outlet_first_R']
+                        total_data_dict[product["nama_barang"]]['outlet_first_s'] += item_data['outlet_first_s']
+                        total_data_dict[product["nama_barang"]]['outlet_first_S'] += item_data['outlet_first_S']
                         total_data_dict[product["nama_barang"]]['c_order'] += item_data['c_order']
                         total_data_dict[product["nama_barang"]]['c_hold'] += item_data['c_hold']
                         total_data_dict[product["nama_barang"]]['c_stockout'] += item_data['c_stockout']
@@ -1978,6 +2001,9 @@ def inventory_collab_view(request):
                         # total_data_dict[product["nama_barang"]]['timespan'] = item_data['timespan']
                         total_data_dict[product["nama_barang"]]['timespan'] = item_data['timespan'] if item_data['timespan'] < total_data_dict[product["nama_barang"]]['timespan'] else total_data_dict[product["nama_barang"]]['timespan']
                         total_data_dict[product["nama_barang"]]['best_calc_duration'] += item_data['best_calc_duration']
+                        total_data_dict[product["nama_barang"]]['outlet_best_R'] += item_data['outlet_best_R']
+                        total_data_dict[product["nama_barang"]]['outlet_best_s'] += item_data['outlet_best_s']
+                        total_data_dict[product["nama_barang"]]['outlet_best_S'] += item_data['outlet_best_S']
                     else:
                         total_data_dict[product["nama_barang"]] = {
                             'nama_barang': product["nama_barang"],
@@ -1993,6 +2019,9 @@ def inventory_collab_view(request):
                             'first_stock_history': item_data['first_stock_history'],
                             'first_timespan': item_data['first_timespan'],
                             'first_calc_duration': item_data['first_calc_duration'],
+                            'outlet_first_R': item_data['outlet_first_R'],
+                            'outlet_first_s': item_data['outlet_first_s'],
+                            'outlet_first_S': item_data['outlet_first_S'],
                             'c_order': item_data['c_order'],
                             'c_hold': item_data['c_hold'],
                             'c_stockout': item_data['c_stockout'],
@@ -2005,6 +2034,9 @@ def inventory_collab_view(request):
                             'stock_history': item_data['stock_history'],
                             'timespan': item_data['timespan'],
                             'best_calc_duration': item_data['best_calc_duration'],
+                            'outlet_best_R': item_data['outlet_best_R'],
+                            'outlet_best_s': item_data['outlet_best_s'],
+                            'outlet_best_S': item_data['outlet_best_S'],
                         }
                     
 
@@ -2021,7 +2053,9 @@ def inventory_collab_view(request):
                         'first_stockout_mean': first_total_stockout,
                         'first_timespan': first_T,
                         'first_calc_duration': first_calc_duration,
-                        'first_inventory_level_plot': first_inventory_level_plot,
+                        'outlet_first_R': outlet_first_R,
+                        'outlet_first_s': outlet_first_s,
+                        'outlet_first_S': outlet_first_S,
                         'c_order': round(c_order),
                         'c_hold': round(c_hold),
                         'c_stockout': round(c_stockout),
@@ -2032,8 +2066,11 @@ def inventory_collab_view(request):
                         'stockout_mean': total_stockout,
                         'timespan': best_T,
                         'best_calc_duration': best_calc_duration,
-                        'inventory_level_plot': inventory_level_plot,
+                        'outlet_best_R': outlet_best_R,
+                        'outlet_best_s': outlet_best_s,
+                        'outlet_best_S': outlet_best_S,
                     })
+
                     # except Exception as e:
                     #     messages.error(request, f"Error in genetic algorithm: {str(e)}")
                     #     continue
@@ -2060,7 +2097,6 @@ def inventory_collab_view(request):
                 total_calc_duration = sum(item['best_calc_duration'] for item in data)
 
                 # Append outlet data
-                data_outlet.append(data)
                 data_all.append({
                     'outlet': outlet,
                     'data': data,
