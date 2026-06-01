@@ -375,6 +375,44 @@
                 {% endif %}
             </div>
             <div class="tab-pane fade" id="optimized" role="tabpanel" aria-labelledby="optimized-tab">
+                {% if pso_used %}
+                <div class="alert alert-info mt-3">
+                    <h5 class="mb-2">
+                        <strong>PSO Hyperparameter Optimisation</strong> 
+                        <span class="badge badge-success ml-1">Active</span>
+                    </h5>
+                    <p class="mb-2 text-muted small">
+                        PSO automatically found the best GA hyperparameters per product before running the final optimisation.
+                    </p>
+                    <table class="table table-sm table-bordered mb-0 bg-white">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Population Size</th>
+                                <th class="text-center">Generations</th>
+                                <th class="text-center">Crossover Rate</th>
+                                <th class="text-center">Mutation Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dt in total_data %}
+                                <tr>
+                                    <td>{{ dt.nama_barang }}</td>
+                                    {% if dt.pso_best_params %}
+                                        <td class="text-center">{{ dt.pso_best_params.population_size }}</td>
+                                        <td class="text-center">{{ dt.pso_best_params.num_generations }}</td>
+                                        <td class="text-center">{{ dt.pso_best_params.crossover_rate }}</td>
+                                        <td class="text-center">{{ dt.pso_best_params.mutation_rate }}</td>
+                                    {% else %}
+                                        <td colspan="4" class="text-center text-muted">Using manual hyperparameters</td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+
                 <!-- <h3>OPTIMIZED CALCULATION</h3> -->
                 <!-- Tabel simulasi transaksi pusat -->
                 <h4 class="mt-3">Collaborative Inventory</h4>

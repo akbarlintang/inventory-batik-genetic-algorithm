@@ -43,42 +43,99 @@
         
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            <!-- <div class="form-group">
-                <label for="exampleFormControlFile1">Input file</label>
-                <input type="file" name="file" class="form-control-file" id="exampleFormControlFile1">
-            </div> -->
+
+            <!-- GA hyperparameters -->
+            <p class="text-muted small mb-1 text-uppercase font-weight-bold">GA Hyperparameters</p>
+            <div class="row">
+                <div class="col-6">
+                <div class="form-group">
+                    <label for="num_generations">Number of Generations</label>
+                    <input type="number" name="num_generations" class="form-control" id="num_generations" placeholder="50">
+                    <small class="form-text text-muted">Used as ceiling when PSO is on</small>
+                </div>
+                </div>
+                <div class="col-6">
+                <div class="form-group">
+                    <label for="population_size">Population Size</label>
+                    <input type="number" name="population_size" class="form-control" id="population_size" placeholder="30">
+                    <small class="form-text text-muted">Used as ceiling when PSO is on</small>
+                </div>
+                </div>
+            </div>
 
             <div class="row">
                 <div class="col-6">
-                    <div class="form-group">
-                        <label for="num_generations">Number of Generation</label>
-                        <input type="number" name="num_generations" class="form-control-file" id="num_generations" placeholder="10" required>
-                    </div>
+                <div class="form-group">
+                    <label for="crossover_rate">Crossover Rate (0–1)</label>
+                    <input type="text" name="crossover_rate" class="form-control" id="crossover_rate" placeholder="0.8">
+                    <small class="form-text text-muted">Ignored when PSO is on</small>
+                </div>
                 </div>
                 <div class="col-6">
-                    <div class="form-group">
-                        <label for="population_size">Population Size</label>
-                        <input type="number" name="population_size" class="form-control-file" id="population_size" placeholder="10" required>
-                    </div>
+                <div class="form-group">
+                    <label for="mutation_rate">Mutation Rate (0–1)</label>
+                    <input type="text" name="mutation_rate" class="form-control" id="mutation_rate" placeholder="0.1">
+                    <small class="form-text text-muted">Ignored when PSO is on</small>
+                </div>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-6">
+
+            <hr>
+
+            <!-- PSO toggle -->
+            <p class="text-muted small mb-1 text-uppercase font-weight-bold">Hyperparameter Optimisation</p>
+
+            <div class="custom-control custom-switch mb-2">
+                <input type="checkbox" class="custom-control-input" id="use_pso_toggle"
+                    name="use_pso" value="true" onchange="togglePso(this)">
+                <label class="custom-control-label" for="use_pso_toggle">
+                Use PSO optimisation
+                <span class="badge badge-info ml-1">recommended</span>
+                </label>
+            </div>
+            <small class="form-text text-muted mb-3 d-block">
+                PSO automatically finds the best crossover &amp; mutation rates before running the final GA.
+            </small>
+
+            <!-- PSO settings (hidden until toggled) -->
+            <div id="pso_fields" style="display:none;">
+                <div class="card card-body bg-light mb-3">
+                <div class="row">
+                    <div class="col-6">
                     <div class="form-group">
-                        <label for="crossover_rate">Crossover Rate (0-1)</label>
-                        <input type="text" name="crossover_rate" class="form-control-file" id="crossover_rate" placeholder="0.8" required>
+                        <label for="pso_particles">PSO Particles</label>
+                        <input type="number" name="pso_particles" class="form-control" id="pso_particles"
+                            placeholder="10" min="2" max="50">
+                        <small class="form-text text-muted">10–15 is a good balance</small>
+                    </div>
+                    </div>
+                    <div class="col-6">
+                    <div class="form-group">
+                        <label for="pso_iters">PSO Iterations</label>
+                        <input type="number" name="pso_iters" class="form-control" id="pso_iters"
+                            placeholder="20" min="5" max="100">
+                        <small class="form-text text-muted">More = slower but better</small>
+                    </div>
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="form-group">
-                        <label for="mutation_rate">Mutation Rate (0-1)</label>
-                        <input type="text" name="mutation_rate" class="form-control-file" id="mutation_rate" placeholder="0.1" required>
+                <div class="row">
+                    <div class="col-6">
+                    <div class="form-group mb-0">
+                        <label for="stockout_weight">Stockout Penalty Weight</label>
+                        <input type="number" name="stockout_weight" class="form-control" id="stockout_weight"
+                            placeholder="1000" step="100" min="0">
+                        <small class="form-text text-muted">
+                        How much 1 unit of stockout costs vs your inventory cost numbers.
+                        Raise this if you want PSO to prioritise reducing stockout.
+                        </small>
                     </div>
+                    </div>
+                </div>
                 </div>
             </div>
 
             <button type="submit" class="btn btn-success">Calculate</button>
+            <small class="text-muted ml-2" id="mode_label">Mode: GA only</small>
         </form>
     </div>
 </div>
@@ -92,5 +149,26 @@
 
 <script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
 <script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+<script>
+function togglePso(cb) {
+    var psoFields  = document.getElementById('pso_fields');
+    var modeLabel  = document.getElementById('mode_label');
+    var crInput    = document.getElementById('crossover_rate');
+    var mrInput    = document.getElementById('mutation_rate');
+
+    if (cb.checked) {
+        psoFields.style.display  = 'block';
+        modeLabel.textContent    = 'Mode: PSO + GA';
+        crInput.style.opacity    = '0.4';
+        mrInput.style.opacity    = '0.4';
+    } else {
+        psoFields.style.display  = 'none';
+        modeLabel.textContent    = 'Mode: GA only';
+        crInput.style.opacity    = '1';
+        mrInput.style.opacity    = '1';
+    }
+}
+</script>
 
 {% endblock javascripts %}
