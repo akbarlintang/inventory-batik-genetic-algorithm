@@ -2,84 +2,107 @@
 
 {% block title %} Purchases {% endblock title %}
 
-<!-- Specific CSS goes HERE -->
 {% block stylesheets %}
-
 {% load static %}
-
 {% endblock stylesheets %}
 
 {% block content %}
 
-<div class="pt-5">
-    <div class="container">
-        <h1>Purchases Form</h1>
+<div class="modern-page-wrapper">
+    <div class="container-fluid">
+        <div class="modern-page-header">
+            <div>
+                <h1>Purchase Form</h1>
+                <p>Add a new purchase data into the inventory system.</p>
+            </div>
 
-        <div class="alert alert-primary" role="alert">
-            <i class="fa fa-info-circle mr-1"></i>
-            This menu is used to add information about the purchase data for each owned product/material.
+            <a href="{% url 'purchase.index' %}" class="btn modern-btn-danger">
+                <i class="fa fa-arrow-left mr-1"></i>
+                Back to List
+            </a>
         </div>
 
-        <br>
+        <div class="modern-info-card">
+            <div class="modern-info-icon">
+                <i class="fa fa-info"></i>
+            </div>
+            <div>
+                <h6>Information</h6>
+                <p>This menu is used to add information about the purchase data for each owned product/material.</p>
+            </div>
+        </div>
 
-        <div>
-            <!-- meload package untuk merender form field -->
+        <div class="modern-form-card">
+            <div class="modern-form-header">
+                <div>
+                    <h5>Purchase Information</h5>
+                    <p>Please fill in the purchase details below.</p>
+                </div>
+            </div>
+
             {% load widget_tweaks %}
-    
+
             <form method="post" enctype="multipart/form-data" novalidate>
-                <!-- menambahkan csrf field untuk keamanan form -->
                 {% csrf_token %}
-    
-                <!-- merender semua field form dari objek TaskForm -->
+
+                {% for hidden_field in form.hidden_fields %}
+                    {{ hidden_field }}
+                {% endfor %}
+
                 {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                    {% for error in form.non_field_errors %}
-                    {{ error }}
+                    <div class="alert alert-danger modern-alert" role="alert">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="modern-form-grid">
+                    {% for field in form.visible_fields %}
+                        <div class="modern-form-group">
+                            <label for="{{ field.id_for_label }}" class="modern-form-label">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+
+                            {% if form.is_bound %}
+                                {% if field.errors %}
+                                    {% render_field field class="form-control modern-form-control is-invalid" placeholder=field.label %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {% render_field field class="form-control modern-form-control is-valid" placeholder=field.label %}
+                                {% endif %}
+                            {% else %}
+                                {% render_field field class="form-control modern-form-control" placeholder=field.label %}
+                            {% endif %}
+
+                            {% if field.help_text %}
+                                <small class="modern-help-text">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
                     {% endfor %}
                 </div>
-                {% endif %}
-    
-                {% for field in form.visible_fields %}
-                <div class="form-group">
-                    {{ field.label_tag }}
-    
-                    {% if form.is_bound %}
-                    {% if field.errors %}
-                        {% render_field field class="form-control is-invalid" %}
-                        {% for error in field.errors %}
-                        <div class="invalid-feedback">
-                            {{ error }}
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        {% render_field field class="form-control is-valid" %}
-                    {% endif %}
-                    {% else %}
-                    {% render_field field class="form-control" %}
-                    {% endif %}
-    
-                    {% if field.help_text %}
-                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                </div>
-                {% endfor %}
-    
-                <div class="d-flex pt-3">
-                    <a href="{% url 'purchase.index' %}" class="btn btn-danger"><i class="fa fa-arrow-left mr-1"></i>Back</a>
-                    <button type="submit" class="btn btn-success">Save<i class="fa fa-chevron-circle-right ml-1"></i></button>
+
+                <div class="modern-form-actions">
+                    <button type="submit" class="btn modern-btn-primary">
+                        Save
+                        <i class="fa fa-chevron-circle-right ml-1"></i>
+                    </button>
                 </div>
             </form>
         </div>
+
+    </div>
 </div>
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE --> 
 {% block javascripts %}
-
 {% load static %}
-
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
-
 {% endblock javascripts %}

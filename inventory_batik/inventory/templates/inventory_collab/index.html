@@ -1,96 +1,171 @@
 {% extends 'layouts/base.html' %}
 
-{% block title %} Periodic Review {% endblock title %}
+{% block title %} Collaborative Inventory {% endblock title %}
 
-<!-- Specific CSS goes HERE -->
 {% block stylesheets %}
-
 {% load static %}
-
 {% endblock stylesheets %}
 
 {% block content %}
 
-<div class="pt-5">
-    <div class="container">
-        <h1>Collaborative Inventory</h1>
-        <div class="alert alert-primary" role="alert">
-            <i class="fa fa-info-circle mr-1"></i>
-            This menu is used to analyze inventory costs using the Periodic Review calculation system.
+<div class="modern-page-wrapper">
+    <div class="container-fluid">
+
+        <div class="modern-page-header">
+            <div>
+                <span class="modern-page-kicker">Optimization</span>
+                <h1>Collaborative Inventory</h1>
+                <p>Analyze inventory costs using the Genetic Algorithm calculation system.</p>
+            </div>
+
+            <a href="{% url 'inventory-collab.input' %}" class="btn modern-btn-primary" data-toggle="tooltip" title="Manual Input">
+                Manual Input
+                <i class="fa fa-arrow-right ml-1"></i>
+            </a>
         </div>
 
-        <!-- blok untuk menampilkan notifikasi pesan sukses -->
-        <div>
-            {% if messages %}
-            
+        <div class="modern-info-card">
+            <div class="modern-info-icon">
+                <i class="fa fa-info"></i>
+            </div>
+            <div>
+                <h6>Information</h6>
+                <p>This menu is used to analyze inventory costs using the Periodic Review calculation system.</p>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="modern-message-wrapper">
                 {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    {{ message | safe }}
-                </div>
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show modern-alert" role="alert">
+                        {{ message | safe }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
                 {% endfor %}
-            
-            {% endif %}
-        </div>
-
-        <br>
-
-        <div class="text-right">
-            <a href="{% url 'inventory-collab.input' %}" class="btn btn-primary" data-toggle="tooltip" title="Manual Input">Manual Input <i class="fa fa-arrow-right ml-1"></i></a>
-        </div>
-        
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <!-- <div class="form-group">
-                <label for="exampleFormControlFile1">Input file</label>
-                <input type="file" name="file" class="form-control-file" id="exampleFormControlFile1">
-            </div> -->
-
-            <div class="row">
-                <div class="col-6">
-                    <div class="form-group">
-                        <label for="num_generations">Number of Generation</label>
-                        <input type="number" name="num_generations" class="form-control-file" id="num_generations" placeholder="10" required>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="form-group">
-                        <label for="population_size">Population Size</label>
-                        <input type="number" name="population_size" class="form-control-file" id="population_size" placeholder="10" required>
-                    </div>
-                </div>
             </div>
-            
-            <div class="row">
-                <div class="col-6">
-                    <div class="form-group">
-                        <label for="crossover_rate">Crossover Rate (0-1)</label>
-                        <input type="text" name="crossover_rate" class="form-control-file" id="crossover_rate" placeholder="0.8" required>
-                    </div>
-                </div>
-                <div class="col-6">
-                    <div class="form-group">
-                        <label for="mutation_rate">Mutation Rate (0-1)</label>
-                        <input type="text" name="mutation_rate" class="form-control-file" id="mutation_rate" placeholder="0.1" required>
-                    </div>
+        {% endif %}
+
+        <div class="modern-form-card modern-algorithm-card">
+            <div class="modern-form-header">
+                <div>
+                    <h5>Genetic Algorithm Parameters</h5>
+                    <p>Set the optimization parameters before running the calculation.</p>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-success">Calculate</button>
-        </form>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="modern-form-grid two-columns">
+                    <div class="modern-form-group">
+                        <label for="num_generations" class="modern-form-label">
+                            Number of Generations <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="modern-input-icon">
+                            <input
+                                type="number"
+                                name="num_generations"
+                                class="form-control modern-form-control"
+                                id="num_generations"
+                                placeholder="Example: 10"
+                                min="1"
+                                required
+                            >
+                        </div>
+
+                        <small class="modern-help-text">
+                            Total iteration count used by the Genetic Algorithm.
+                        </small>
+                    </div>
+
+                    <div class="modern-form-group">
+                        <label for="population_size" class="modern-form-label">
+                            Population Size <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="modern-input-icon">
+                            <input
+                                type="number"
+                                name="population_size"
+                                class="form-control modern-form-control"
+                                id="population_size"
+                                placeholder="Example: 10"
+                                min="2"
+                                required
+                            >
+                        </div>
+
+                        <small class="modern-help-text">
+                            Number of candidate solutions generated in each generation.
+                        </small>
+                    </div>
+
+                    <div class="modern-form-group">
+                        <label for="crossover_rate" class="modern-form-label">
+                            Crossover Rate <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="modern-input-icon">
+                            <input
+                                type="number"
+                                name="crossover_rate"
+                                class="form-control modern-form-control"
+                                id="crossover_rate"
+                                placeholder="Example: 0.8"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                required
+                            >
+                        </div>
+
+                        <small class="modern-help-text">
+                            Value must be between 0 and 1.
+                        </small>
+                    </div>
+
+                    <div class="modern-form-group">
+                        <label for="mutation_rate" class="modern-form-label">
+                            Mutation Rate <span class="text-danger">*</span>
+                        </label>
+
+                        <div class="modern-input-icon">
+                            <input
+                                type="number"
+                                name="mutation_rate"
+                                class="form-control modern-form-control"
+                                id="mutation_rate"
+                                placeholder="Example: 0.1"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                required
+                            >
+                        </div>
+
+                        <small class="modern-help-text">
+                            Value must be between 0 and 1.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="modern-form-actions">
+                    <button type="submit" class="btn modern-btn-success">
+                        <i class="fa fa-calculator mr-1"></i>
+                        Calculate
+                    </button>
+                </div>
+            </form>
+        </div>
+
     </div>
 </div>
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE --> 
 {% block javascripts %}
-
 {% load static %}
-
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
-
 {% endblock javascripts %}

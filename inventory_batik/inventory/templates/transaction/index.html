@@ -2,131 +2,187 @@
 
 {% block title %} Transactions {% endblock title %}
 
-<!-- Specific CSS goes HERE -->
 {% block stylesheets %}
-
 {% load static %}
-
+{% load humanize %}
 {% endblock stylesheets %}
 
 {% block content %}
 
-<div class="pt-5">
-    <div class="container">
-        <h1>Transaction List</h1>
-        <div class="alert alert-primary" role="alert">
-            <i class="fa fa-info-circle mr-1"></i>
-            This menu is used to display the transaction data.
-        </div>
+<div class="modern-page-wrapper">
+    <div class="container-fluid">
 
-        <!-- blok untuk menampilkan notifikasi pesan sukses -->
-        <div>
-            {% if messages %}
-
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                {{ message | safe }}
+        <div class="modern-page-header">
+            <div>
+                <h1>Transaction List</h1>
+                <p>Manage transactions data in your inventory system.</p>
             </div>
-            {% endfor %}
-
-            {% endif %}
         </div>
 
-        <br>
+        <div class="modern-info-card">
+            <div class="modern-info-icon">
+                <i class="fa fa-info"></i>
+            </div>
+            <div>
+                <h6>Information</h6>
+                <p>This menu is used to display the transaction data.</p>
+            </div>
+        </div>
 
-        <!-- <input type="text" name="daterange" value="01/01/2015 - 01/31/2015" /> -->
+        {% if messages %}
+            <div class="modern-message-wrapper">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show modern-alert" role="alert">
+                        {{ message | safe }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-        <form method="get" action="{% url 'transaction.index' %}">
-            <div class="row">
-                <div class="col-3">
-                    <div class="form-group">
-                        <label for="start_date">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" id="start_date" value="{{ start_date|date:'Y-m-d' }}">
+        <form method="get" action="{% url 'transaction.index' %}" class="modern-filter-card">
+            <div class="modern-filter-header">
+                <div>
+                    <h5>Filter Data</h5>
+                    <p>Select a date range to filter the transactions records.</p>
+                </div>
+
+                {% if start_date or end_date %}
+                    <a href="{% url 'transaction.index' %}" class="btn modern-btn-danger modern-filter-reset">
+                        <i class="fa fa-rotate-left mr-1"></i>
+                        Reset
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="row align-items-end mb-3">
+                <div class="col-lg-4 col-md-6">
+                    <div class="modern-form-group">
+                        <label for="start_date" class="modern-form-label">Start Date</label>
+                        <div class="modern-input-icon">
+                            <input 
+                                type="date" 
+                                name="start_date" 
+                                class="form-control modern-form-control" 
+                                id="start_date" 
+                                value="{{ start_date|date:'Y-m-d' }}"
+                            >
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-3">
-                    <div class="form-group">
-                        <label for="end_date">End Date</label>
-                        <input type="date" name="end_date" class="form-control" id="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                <div class="col-lg-4 col-md-6">
+                    <div class="modern-form-group">
+                        <label for="end_date" class="modern-form-label">End Date</label>
+                        <div class="modern-input-icon">
+                            <input 
+                                type="date" 
+                                name="end_date" 
+                                class="form-control modern-form-control" 
+                                id="end_date" 
+                                value="{{ end_date|date:'Y-m-d' }}"
+                            >
+                        </div>
                     </div>
                 </div>
 
-                <div class="col-3 my-auto">
-                    <button type="submit" class="btn btn-primary">Filter <i class="fa fa-filter"></i></button>
+                <div class="col-lg-4 col-md-12">
+                    <div class="modern-filter-actions">
+                        <button type="submit" class="btn modern-btn-primary">
+                            Filter
+                            <i class="fa fa-filter ml-1"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </form>
 
-        <table class="table table-bordered table-striped" id="datatable">
-            <thead>
-                <tr>
-                    <th width="5%" class="text-center">ID</th>
-                    {% if request.user.employee.role == 'superadmin' %}
-                        <th class="text-center">Outlet</th>
-                    {% endif %}
-                    <th class="text-center">Date</th>
-                    <th class="text-center">Item Code</th>
-                    <th class="text-center">Name</th>
-                    <th class="text-center">Transaction Type</th>
-                    <th class="text-center">In</th>
-                    <th class="text-center">Out</th>
-                    <!-- <th class="text-center">Stock</th> -->
-                </tr>
-            </thead>
-            <tbody>
-                <!-- daftar task-->
-                {% if transactions %}
-                {% for transaction in transactions %}
-                <tr>
-                    <td class="text-center">{{ forloop.counter }}</td>
-                    {% if request.user.employee.role == 'superadmin' %}
-                    <td>
-                        {% if transaction.type == 'purchase' %}
-                            {{ transaction.purchase.outlet }}
+        <div class="modern-table-card">
+            <div class="modern-table-header">
+                <div>
+                    <h5>Sales Data</h5>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table modern-datatable" id="datatable">
+                    <thead>
+                        <tr>
+                            <th width="5%" class="text-center">ID</th>
+                            {% if request.user.employee.role == 'superadmin' %}
+                                <th class="text-center">Outlet</th>
+                            {% endif %}
+                            <th class="text-center">Date</th>
+                            <th class="text-center">Item Code</th>
+                            <th class="text-center">Name</th>
+                            <th class="text-center">Transaction Type</th>
+                            <th class="text-center">In</th>
+                            <th class="text-center">Out</th>
+                            <!-- <th class="text-center">Stock</th> -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- daftar task-->
+                        {% if transactions %}
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            {% if request.user.employee.role == 'superadmin' %}
+                            <td>
+                                {% if transaction.type == 'purchase' %}
+                                    {{ transaction.purchase.outlet }}
+                                {% else %}
+                                    {{ transaction.sales.outlet }}
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            <td class="text-center">{{ transaction.created_at|date:"d F Y" }}</td>
+                            {% if transaction.type == 'purchase' %}
+                                <td>{{ transaction.purchase.item.code }}</td>
+                            {% else %}
+                                <td>{{ transaction.sales.item.code }}</td>
+                            {% endif %}
+                            {% if transaction.type == 'purchase' %}
+                                <td>{{ transaction.purchase.item.name }}</td>
+                            {% else %}
+                                <td>{{ transaction.sales.item.name }}</td>
+                            {% endif %}
+                            <td class="text-center">
+                                {% if transaction.type == 'purchase' %}
+                                    <span class="modern-status-badge badge-purchase">
+                                        <i class="fa fa-arrow-down"></i>
+                                        Pembelian
+                                    </span>
+                                {% else %}
+                                    <span class="modern-status-badge badge-sale">
+                                        <i class="fa fa-arrow-up"></i>
+                                        Penjualan
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <!-- Masuk -->
+                            {% if transaction.type == 'purchase' %}
+                                <td class="text-right">{{ transaction.purchase.amount|intcomma }}</td>
+                            {% else %}
+                                <td class="text-right">-</td>
+                            {% endif %}
+                            <!-- Keluar -->
+                            {% if transaction.type == 'purchase' %}
+                                <td class="text-right">-</td>
+                            {% else %}
+                                <td class="text-right">{{ transaction.sales.amount|intcomma }}</td>
+                            {% endif %}
+                            <!-- <td>{{ transaction.stock }}</td> -->
+                        </tr>
+                        {% endfor %}
                         {% else %}
-                            {{ transaction.sales.outlet }}
                         {% endif %}
-                    </td>
-                    {% endif %}
-                    <td class="text-center">{{ transaction.created_at|date:"d F Y" }}</td>
-                    {% if transaction.type == 'purchase' %}
-                        <td>{{ transaction.purchase.item.code }}</td>
-                    {% else %}
-                        <td>{{ transaction.sales.item.code }}</td>
-                    {% endif %}
-                    {% if transaction.type == 'purchase' %}
-                        <td>{{ transaction.purchase.item.name }}</td>
-                    {% else %}
-                        <td>{{ transaction.sales.item.name }}</td>
-                    {% endif %}
-                    {% if transaction.type == 'purchase' %}
-                        <td class="text-success">Pembelian</td>
-                    {% else %}
-                        <td class="text-danger">Penjualan</td>
-                    {% endif %}
-                    <!-- Masuk -->
-                    {% if transaction.type == 'purchase' %}
-                        <td>{{ transaction.purchase.amount }}</td>
-                    {% else %}
-                        <td>-</td>
-                    {% endif %}
-                    <!-- Keluar -->
-                    {% if transaction.type == 'purchase' %}
-                        <td>-</td>
-                    {% else %}
-                        <td>{{ transaction.sales.amount }}</td>
-                    {% endif %}
-                    <!-- <td>{{ transaction.stock }}</td> -->
-                </tr>
-                {% endfor %}
-                {% else %}
-                {% endif %}
-            </tbody>
-        </table>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 

@@ -98,38 +98,46 @@
   </div>
 </div>
 
-<div class="container-fluid mt-3">
+<div class="container-fluid mt-3 dashboard-content">
   <div class="row">
     <div class="col-12">
-      <h6 class="my-2 text-muted text-uppercase ls-1">Top 3 Sales</h6>
-      <table class="table table-bordered table-striped" id="topSalesTable">
-            <thead>
-                <tr>
-                    <th width="5%" class="text-center">No.</th>
-                    <th class="text-center">Item Name</th>
-                    <th class="text-center">Sales Total</th>
-                </tr>
-            </thead>
-            <tbody>
+      <div class="dashboard-panel">
+        <h6 class="section-title text-uppercase">Top 3 Sales</h6>
 
-            </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table table-striped" id="topSalesTable">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No.</th>
+                        <th class="text-center">Item Name</th>
+                        <th class="text-center">Sales Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+          </div>
+        </div>
     </div>
   </div>
 
   <div class="row">
     <div class="col-xl-12">
-      <div class="card-header bg-transparent">
-        <div class="row align-items-center">
-          <div class="col">
-            <h6 class="my-2 text-muted text-uppercase ls-1">Summary</h6>
-            <h5 class="h5 mb-0">Sales Total</h5>
+      <div class="card mb-4">
+        <div class="card-header bg-transparent">
+          <div class="row align-items-center">
+            <div class="col">
+              <h6 class="my-2 text-muted text-uppercase ls-1">Summary</h6>
+              <h5 class="h5 mb-0">Sales Total</h5>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="card-body">
-        <div class="chart">
-          <canvas id="salesChart" width="400" height="120"></canvas>
+
+        <div class="card-body">
+          <div class="chart">
+            <canvas id="salesChart" width="400" height="120"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -137,8 +145,11 @@
 
   <div class="row">
     <div class="col-12">
-      <h6 class="my-2 text-muted text-uppercase ls-1">Top 3 Purchases</h6>
-      <table class="table table-bordered table-striped" id="topPurchasesTable">
+      <div class="dashboard-panel">
+        <h6 class="section-title text-uppercase">Top 3 Purchases</h6>
+
+        <div class="table-responsive">
+          <table class="table table-striped" id="topPurchasesTable">
             <thead>
                 <tr>
                     <th width="5%" class="text-center">No.</th>
@@ -149,23 +160,28 @@
             <tbody>
 
             </tbody>
-        </table>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="row">
     <div class="col-xl-12">
-      <div class="card-header bg-transparent">
-        <div class="row align-items-center">
-          <div class="col">
-            <h6 class="my-2 text-muted text-uppercase ls-1">Summary</h6>
-            <h5 class="h5 mb-0">Purchases Total</h5>
+      <div class="card mb-4">
+        <div class="card-header bg-transparent">
+          <div class="row align-items-center">
+            <div class="col">
+              <h6 class="my-2 text-muted text-uppercase ls-1">Summary</h6>
+              <h5 class="h5 mb-0">Purchases Total</h5>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="card-body">
-        <div class="chart">
-          <canvas id="purchasesChart" width="400" height="120"></canvas>
+
+        <div class="card-body">
+          <div class="chart">
+            <canvas id="purchasesChart" width="400" height="120"></canvas>
+          </div>
         </div>
       </div>
     </div>

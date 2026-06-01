@@ -2,45 +2,52 @@
 
 {% block title %} Export Data {% endblock title %}
 
-<!-- Specific CSS goes HERE -->
 {% block stylesheets %}
-
 {% load static %}
-
 {% endblock stylesheets %}
 
 {% block content %}
 
-<div class="pt-5">
-    <div class="container">
-        <h1>Export Data</h1>
-        <div class="alert alert-primary" role="alert">
-            <i class="fa fa-info-circle mr-1"></i>
-            This menu is used to export the data needed for the Periodic Review analysis process.
+<div class="modern-page-wrapper">
+    <div class="container-fluid">
+
+        <div class="modern-page-header">
+            <div>
+                <h1>Export Data</h1>
+                <p>Export transaction data for Periodic Review analysis.</p>
+            </div>
         </div>
 
-        <!-- blok untuk menampilkan notifikasi pesan sukses -->
-        <div>
-            {% if messages %}
-            
+        <div class="modern-info-card">
+            <div class="modern-info-icon">
+                <i class="fa fa-info"></i>
+            </div>
+            <div>
+                <h6>Information</h6>
+                <p>This menu is used to export the data needed for the Periodic Review analysis process.</p>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="modern-message-wrapper">
                 {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    {{ message | safe }}
-                </div>
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show modern-alert" role="alert">
+                        {{ message | safe }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
                 {% endfor %}
-            
-            {% endif %}
-        </div>
-
-        <br>
+            </div>
+        {% endif %}
 
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
-            <button type="submit" class="btn btn-success" >Export</button>
+            <button type="submit" class="btn modern-btn-success">
+                Export
+                <i class="fa fa-file-excel ml-1"></i>
+            </button>
         </form>
     </div>
 </div>

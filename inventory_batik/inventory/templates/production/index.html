@@ -2,98 +2,136 @@
 
 {% block title %} Production {% endblock title %}
 
-<!-- Specific CSS goes HERE -->
 {% block stylesheets %}
-
 {% load static %}
-
 {% endblock stylesheets %}
 
 {% block content %}
 
-<div class="pt-5">
-    <div class="container">
-        <h1>Production List</h1>
-        <div class="alert alert-primary" role="alert">
-            <i class="fa fa-info-circle mr-1"></i>
-            This menu is used to display the production data for each owned product.
-        </div>
+<div class="modern-page-wrapper">
+    <div class="container-fluid">
 
-        <!-- blok untuk menampilkan notifikasi pesan sukses -->
-        <div>
-            {% if messages %}
-
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                {{ message | safe }}
+        <div class="modern-page-header">
+            <div>
+                <h1>Production List</h1>
+                <p>Manage purchases data in your inventory system.</p>
             </div>
-            {% endfor %}
 
-            {% endif %}
+            <a href="{% url 'production.create' %}" class="btn modern-btn-primary">
+                <i class="fa fa-plus mr-1"></i>
+                Add Production
+            </a>
         </div>
 
-        <div class="text-right">
-            <a href="{% url 'production.create' %}" class="btn btn-success" data-toggle="tooltip" title="Add"><i class="fa fa-plus mr-1"></i> Add</a>
+        <div class="modern-info-card">
+            <div class="modern-info-icon">
+                <i class="fa fa-info"></i>
+            </div>
+            <div>
+                <h6>Information</h6>
+                <p>This menu is used to display the production data for each owned product.</p>
+            </div>
         </div>
 
-        <br>
-
-        <table class="table table-bordered table-striped" id="datatable">
-            <thead>
-                <tr>
-                    <th width="5%" class="text-center">ID</th>
-                    {% if request.session.outlet_id == 'all' %}
-                        <th class="text-center">Outlet</th>
-                    {% endif %}
-                    <th class="text-center">Item Code</th>
-                    <th class="text-center">Name</th>
-                    <th class="text-center">Amount</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- daftar task-->
-                {% if productions%}
-                {% for production in productions%}
-                <tr>
-                    <td class="text-center">{{ forloop.counter }}</td>
-                    {% if request.session.outlet_id == 'all' %}
-                    <td>{{ production.outlet.name }}</td>
-                    {% endif %}
-                    <td>{{ production.item.code }}</td>
-                    <td>{{ production.item.name }}</td>
-                    <td class="text-right">{{ production.amount }} {{ production.unit }}</td>
-                    <td class="text-center">
-                        <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
-                        <a href="{% url 'production.update' production.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit"><i
-                                class="fa fa-edit"></i></a>
-                        <a href="{% url 'production.delete' production.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Delete"
-                            onclick="return confirm('Are you sure you want to delete this purchase?')"><i
-                                class="fa fa-trash"></i></a>
-                    </td>
-                </tr>
+        {% if messages %}
+            <div class="modern-message-wrapper">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show modern-alert" role="alert">
+                        {{ message | safe }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
                 {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
+            </div>
+        {% endif %}
+
+        <div class="modern-table-card">
+            <div class="modern-table-header">
+                <div>
+                    <h5>Purchase Data</h5>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table modern-datatable" id="datatable">
+                    <thead>
+                        <tr>
+                            <th width="5%" class="text-center">ID</th>
+                            {% if request.session.outlet_id == 'all' %}
+                                <th class="text-center">Outlet</th>
+                            {% endif %}
+                            <th class="text-center">Item Code</th>
+                            <th class="text-center">Name</th>
+                            <th class="text-center">Amount</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- daftar task-->
+                        {% if productions%}
+                        {% for production in productions%}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            {% if request.session.outlet_id == 'all' %}
+                            <td>{{ production.outlet.name }}</td>
+                            {% endif %}
+                            <td>{{ production.item.code }}</td>
+                            <td>{{ production.item.name }}</td>
+                            <td class="text-right">{{ production.amount }} {{ production.unit }}</td>
+                            <td class="text-center">
+                                <!-- <a href="#" class="btn modern-action-btn modern-action-primary"><i class="fa fa-file"></i></a> -->
+                                <a href="{% url 'production.update' production.id %}" class="btn modern-action-btn modern-action-warning" data-toggle="tooltip" title="Edit"><i
+                                        class="fa fa-edit"></i></a>
+                                <a href="{% url 'production.delete' production.id %}" class="btn modern-action-btn modern-action-danger" data-toggle="tooltip" title="Delete"
+                                    onclick="return confirm('Are you sure you want to delete this purchase?')"><i
+                                        class="fa fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE -->
 {% block javascripts %}
-
 {% load static %}
 
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
-
 <script>
-    let table = new DataTable('#datatable');
+    const productionTable = new DataTable('#datatable', {
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        ordering: true,
+        columnDefs: [
+            {
+                targets: [3],
+                orderable: false,
+                searchable: false
+            },
+            {
+                targets: [0, 3],
+                className: 'text-center'
+            }
+        ],
+        language: {
+            search: '',
+            searchPlaceholder: 'Search item...',
+            lengthMenu: '_MENU_ entries per page',
+            info: 'Showing _START_ to _END_ of _TOTAL_ items',
+            infoEmpty: 'No items available',
+            zeroRecords: 'No matching items found',
+            emptyTable: 'No item data available'
+        }
+    });
+
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 </script>
 
 {% endblock javascripts %}

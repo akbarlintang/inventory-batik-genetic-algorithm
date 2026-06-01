@@ -2,103 +2,143 @@
 
 {% block title %} Products {% endblock title %}
 
-<!-- Specific CSS goes HERE -->
 {% block stylesheets %}
-
 {% load static %}
-
 {% endblock stylesheets %}
 
 {% block content %}
 
-<div class="pt-5">
-    <div class="container">
-        <h1>Product List</h1>
-        <div class="alert alert-primary" role="alert">
-            <i class="fa fa-info-circle mr-1"></i>
-            This menu is used to display the owned items/products data.
-        </div>
+<div class="modern-page-wrapper">
+    <div class="container-fluid">
 
-        <!-- blok untuk menampilkan notifikasi pesan sukses -->
-        <div>
-            {% if messages %}
-
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                {{ message | safe }}
+        <div class="modern-page-header">
+            <div>
+                <h1>Product List</h1>
+                <p>Manage product data in your inventory system.</p>
             </div>
-            {% endfor %}
 
-            {% endif %}
+            <a href="{% url 'product.create' %}" class="btn modern-btn-primary">
+                <i class="fa fa-plus mr-1"></i>
+                Add Product
+            </a>
         </div>
 
-        {% if request.user.employee.role == 'superadmin' %}
-            <div class="text-right">
-                <a href="{% url 'product.create' %}" class="btn btn-success" data-toggle="tooltip" title="Add"><i class="fa fa-plus mr-1"></i>Add</a>
+        <div class="modern-info-card">
+            <div class="modern-info-icon">
+                <i class="fa fa-info"></i>
+            </div>
+            <div>
+                <h6>Information</h6>
+                <p>This menu is used to display the owned items/products data.</p>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="modern-message-wrapper">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show modern-alert" role="alert">
+                        {{ message | safe }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
             </div>
         {% endif %}
 
-        <br>
+        <div class="modern-table-card">
+            <div class="modern-table-header">
+                <div>
+                    <h5>Product Data</h5>
+                </div>
+            </div>
 
-        <table class="table table-bordered table-striped" id="datatable">
-            <thead>
-                <tr>
-                    <th width="5%" class="text-center">ID</th>
-                    <th class="text-center">Item Code</th>
-                    <th class="text-center">Name</th>
-                    <th class="text-center">Description</th>
-                    <th class="text-center">Price</th>
-                    <th class="text-center">Stock</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- daftar task-->
-                {% if items %}
-                {% for item in items %}
-                <tr>
-                    <td class="text-center">{{ forloop.counter }}</td>
-                    <td>{{ item.code }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.description }}</td>
-                    <td class="text-right">Rp {{ item.price }}</td>
-                    <td class="text-right">{{ item.total_stock }}</td>
-                    <td class="text-center">
-                        {% if request.user.employee.role == 'superadmin' %}
-                        <a href="{% url 'product.recipe.index' item.id %}" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Recipe"><i
-                                class="fa fa-file"></i></a>
+            <div class="table-responsive">
+                <table class="table modern-datatable" id="datatable">
+                    <thead>
+                        <tr>
+                            <th width="5%" class="text-center">ID</th>
+                            <th class="text-center">Item Code</th>
+                            <th class="text-center">Name</th>
+                            <th class="text-center">Description</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if items %}
+                            {% for item in items %}
+                                <tr>
+                                    <td class="text-center">{{ forloop.counter }}</td>
+                                    <td>{{ item.code }}</td>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.description }}</td>
+                                    <td class="text-right">Rp {{ item.price }}</td>
+                                    <td class="text-right">{{ item.total_stock }}</td>
+                                    <td class="text-center">
+                                        <div class="modern-action-group">
+                                            {% if request.user.employee.role == 'superadmin' %}
+                                            <a href="{% url 'product.recipe.index' item.id %}" class="btn modern-action-btn modern-action-primary" data-toggle="tooltip" title="Recipe">
+                                                <i class="fa fa-file"></i>
+                                            </a>
+                                            {% endif %}
+                                            <a href="{% url 'product.update' item.id %}" class="btn modern-action-btn modern-action-warning" data-toggle="tooltip" title="Edit">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                            {% if request.user.employee.role == 'superadmin' %}
+                                            <a href="{% url 'product.delete' item.id %}" class="btn modern-action-btn modern-action-danger" data-toggle="tooltip" title="Delete"
+                                                onclick="return confirm('Are you sure you want to delete this item?')">
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
                         {% endif %}
-                        <a href="{% url 'product.update' item.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit"><i
-                                class="fa fa-edit"></i></a>
-                        {% if request.user.employee.role == 'superadmin' %}
-                        <a href="{% url 'product.delete' item.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Delete"
-                            onclick="return confirm('Are you sure you want to delete this item?')"><i
-                                class="fa fa-trash"></i></a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-                {% endif %}
-            </tbody>
-        </table>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE -->
 {% block javascripts %}
-
 {% load static %}
 
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
-<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
-
 <script>
-    let table = new DataTable('#datatable');
+    const itemTable = new DataTable('#datatable', {
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        ordering: true,
+        columnDefs: [
+            {
+                targets: [3],
+                orderable: false,
+                searchable: false
+            },
+            {
+                targets: [0, 3],
+                className: 'text-center'
+            }
+        ],
+        language: {
+            search: '',
+            searchPlaceholder: 'Search item...',
+            lengthMenu: '_MENU_ entries per page',
+            info: 'Showing _START_ to _END_ of _TOTAL_ items',
+            infoEmpty: 'No items available',
+            zeroRecords: 'No matching items found',
+            emptyTable: 'No item data available'
+        }
+    });
+
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 </script>
 
 {% endblock javascripts %}
