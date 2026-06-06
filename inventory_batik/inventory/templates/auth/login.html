@@ -1,51 +1,377 @@
 {% extends 'layouts/auth.html' %}
 
-{% block title %} Login Account{% endblock title %}
+{% block title %} Login Account {% endblock title %}
 
-{% block web_title %} <h1 class="text-white">Login Akun</h1> {% endblock web_title %}
-
-{% block web_desc %} <p class="text-lead text-light">Masuk ke Akun Anda Untuk Akses Inventory System</p>
-{% endblock web_desc %}
+{% block web_title %}{% endblock web_title %}
+{% block web_desc %}{% endblock web_desc %}
 
 {% block content %}
+<style>
+    .modern-auth-wrapper {
+        min-height: 72vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
 
-<div class="row justify-content-center">
-    <div class="col-lg-6 col-md-8">
-        <div class="card bg-secondary shadow border-0">
-            <div class="card-body px-lg-5 py-lg-5">
-                {% if error %}
-                <div class="alert alert-danger" role="alert">
-                    {{ error }}
+    .modern-auth-card {
+        width: 100%;
+        max-width: 980px;
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        border-radius: 28px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 30px 90px rgba(15, 23, 42, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .modern-auth-panel {
+        position: relative;
+        padding: 3rem;
+        background:
+            radial-gradient(circle at top left, rgba(255, 255, 255, 0.25), transparent 18rem),
+            linear-gradient(135deg, #2563eb, #06b6d4);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 520px;
+    }
+
+    .modern-auth-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+    }
+
+    .modern-auth-logo {
+        width: 52px;
+        height: 52px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        color: #ffffff;
+        box-shadow: 0 16px 34px rgba(15, 23, 42, 0.18);
+    }
+
+    .modern-auth-brand-text h5 {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 900;
+        margin-bottom: 0.15rem;
+    }
+
+    .modern-auth-brand-text span {
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .modern-auth-panel-content h1 {
+        color: #ffffff;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+        line-height: 1.05;
+        letter-spacing: -0.06em;
+        margin-bottom: 1rem;
+    }
+
+    .modern-auth-panel-content p {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: 0;
+    }
+
+    .modern-auth-feature {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.88rem;
+        font-weight: 700;
+    }
+
+    .modern-auth-feature i {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.16);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modern-auth-form-section {
+        padding: 3rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .modern-auth-form-inner {
+        width: 100%;
+    }
+
+    .modern-auth-form-header {
+        margin-bottom: 2rem;
+    }
+
+    .modern-auth-form-header span {
+        display: block;
+        color: #2563eb;
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 0.55rem;
+    }
+
+    .modern-auth-form-header h2 {
+        color: #111827;
+        font-size: 2rem;
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        margin-bottom: 0.45rem;
+    }
+
+    .modern-auth-form-header p {
+        color: #64748b;
+        font-size: 0.95rem;
+        margin-bottom: 0;
+    }
+
+    .modern-auth-alert {
+        border: 0;
+        border-radius: 16px;
+        background: #fee2e2;
+        color: #991b1b;
+        font-weight: 700;
+        padding: 0.9rem 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .modern-auth-group {
+        margin-bottom: 1.1rem;
+    }
+
+    .modern-auth-label {
+        display: block;
+        color: #334155;
+        font-size: 0.86rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .modern-auth-input-wrapper {
+        position: relative;
+    }
+
+    .modern-auth-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.95rem;
+        z-index: 2;
+    }
+
+    .modern-auth-input {
+        width: 100%;
+        min-height: 52px;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        background: #ffffff;
+        color: #111827;
+        font-size: 0.95rem;
+        font-weight: 600;
+        padding: 0.85rem 1rem 0.85rem 2.8rem;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+        transition: 0.18s ease;
+    }
+
+    .modern-auth-input::placeholder {
+        color: #94a3b8;
+        font-weight: 500;
+    }
+
+    .modern-auth-input:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .modern-auth-submit {
+        width: 100%;
+        min-height: 52px;
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #2563eb, #06b6d4);
+        color: #ffffff;
+        font-size: 0.95rem;
+        font-weight: 900;
+        margin-top: 0.5rem;
+        box-shadow: 0 18px 38px rgba(37, 99, 235, 0.28);
+        transition: 0.2s ease;
+    }
+
+    .modern-auth-submit:hover {
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 22px 48px rgba(37, 99, 235, 0.36);
+    }
+
+    .modern-auth-register {
+        margin-top: 1.5rem;
+        text-align: center;
+        color: #64748b;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .modern-auth-register a {
+        color: #2563eb;
+        font-weight: 900;
+        text-decoration: none;
+    }
+
+    .modern-auth-register a:hover {
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    @media (max-width: 991px) {
+        .modern-auth-card {
+            max-width: 560px;
+            grid-template-columns: 1fr;
+        }
+
+        .modern-auth-panel {
+            min-height: auto;
+            padding: 2rem;
+            gap: 2rem;
+        }
+
+        .modern-auth-panel-content h1 {
+            font-size: 2rem;
+        }
+
+        .modern-auth-form-section {
+            padding: 2rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .modern-auth-wrapper {
+            padding: 1rem;
+        }
+
+        .modern-auth-card {
+            border-radius: 22px;
+        }
+
+        .modern-auth-panel,
+        .modern-auth-form-section {
+            padding: 1.5rem;
+        }
+
+        .modern-auth-form-header h2 {
+            font-size: 1.65rem;
+        }
+    }
+</style>
+
+<div class="modern-auth-wrapper">
+    <div class="modern-auth-card">
+
+        <div class="modern-auth-panel">
+            <div class="modern-auth-brand">
+                <span class="modern-auth-logo">SIB</span>
+                <div class="modern-auth-brand-text">
+                    <h5>Sistem Inventory Batik</h5>
+                    <span>Inventory Management System</span>
                 </div>
+            </div>
+
+            <div class="modern-auth-panel-content">
+                <h1>Manage inventory with confidence.</h1>
+                <p>
+                    Monitor outlets, products, sales, purchases, and collaborative inventory calculations from one dashboard.
+                </p>
+            </div>
+        </div>
+
+        <div class="modern-auth-form-section">
+            <div class="modern-auth-form-inner">
+
+                <div class="modern-auth-form-header">
+                    <span>Welcome Back</span>
+                    <h2>Login Akun</h2>
+                    <p>Masuk ke akun Anda untuk mengakses Inventory System.</p>
+                </div>
+
+                {% if error %}
+                    <div class="modern-auth-alert" role="alert">
+                        <i class="fa fa-circle-exclamation mr-1"></i>
+                        {{ error }}
+                    </div>
                 {% endif %}
 
                 <form role="form" method="post">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <div class="input-group input-group-alternative mb-3">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text"><i class="ni ni-hat-3"></i></span>
-                            </div>
-                            <input class="form-control" placeholder="Username" type="text" name="username" required>
+
+                    <div class="modern-auth-group">
+                        <label for="username" class="modern-auth-label">Username</label>
+                        <div class="modern-auth-input-wrapper">
+                            <i class="ni ni-hat-3"></i>
+                            <input 
+                                class="modern-auth-input" 
+                                placeholder="Enter your username" 
+                                type="text" 
+                                name="username" 
+                                id="username"
+                                autocomplete="username"
+                                required
+                            >
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="input-group input-group-alternative">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
-                            </div>
-                            <input class="form-control" placeholder="Password" type="password" name="password" required>
+
+                    <div class="modern-auth-group">
+                        <label for="password" class="modern-auth-label">Password</label>
+                        <div class="modern-auth-input-wrapper">
+                            <i class="ni ni-lock-circle-open"></i>
+                            <input 
+                                class="modern-auth-input" 
+                                placeholder="Enter your password" 
+                                type="password" 
+                                name="password" 
+                                id="password"
+                                autocomplete="current-password"
+                                required
+                            >
                         </div>
                     </div>
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary mt-4">Masuk Akun</button>
-                        <div class="text-register mt-4">
-                            <span>Belum punya akun ? <a href="/register">Daftar Sekarang</a></span>
-                        </div>
+
+                    <button type="submit" class="btn modern-auth-submit">
+                        Masuk Akun
+                        <i class="fa fa-arrow-right ml-1"></i>
+                    </button>
+
+                    <div class="modern-auth-register">
+                        <span>Belum punya akun?</span>
+                        <a href="/register">Daftar Sekarang</a>
                     </div>
                 </form>
+
             </div>
         </div>
+
     </div>
 </div>
 
